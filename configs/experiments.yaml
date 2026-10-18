@@ -1,0 +1,33 @@
+# Research experiment configuration.
+# All classification splits are GROUPED by video/sequence (never random frames).
+
+seed: 42
+split:
+  val_frac: 0.15
+  test_frac: 0.15
+
+detection:
+  model: yolov8n.pt
+  conf: 0.25
+  iou: 0.45
+  person_class_id: 0
+  device: cpu
+
+video:
+  max_dim: 1280          # downscale long side before processing
+  frame_stride: 2        # process every Nth frame for the dashboard
+
+features:
+  window_frames: 30      # rolling window for temporal features
+  window_stride: 5       # sliding-window step when building feature tables
+  grid_size: 4           # 4x4 spatial grid for concentration features
+
+experiments:
+  algorithms: [logreg, dt, rf, svm, xgb]
+  # Experiment E (prediction horizons) only runs if enabled AND future-event
+  # labels exist in the data. Disabled by default: UCSD labels do not provide
+  # validated future congestion events.
+  prediction_horizons:
+    enabled: false
+    horizons_seconds: [30, 60]
+    reason_if_disabled: "No validated future-event labels available in provided datasets."

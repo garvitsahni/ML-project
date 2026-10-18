@@ -1,0 +1,29 @@
+# CrowdSense AI — pinned to the verified-working environment (Python 3.13.2, Windows).
+# Environment-specific notes:
+# - torch 2.9.0 is a CPU-only build (no CUDA) -> YOLO inference on CPU; density-CNN
+#   training (CSRNet-style) is documented as BLOCKED, see README "Limitations".
+# - opencv-python 4.12 and opencv-python-headless 5.0 coexist in this env;
+#   cv2 imports as 5.0.0 and VideoCapture works (verified).
+# - ByteTrack requires `lap` (installed; pinned explicitly).
+
+# Core CV / ML stack (versions = currently installed & verified)
+numpy==2.4.2
+pandas==3.0.0
+scipy==1.17.0
+opencv-python==4.12.0.88
+ultralytics==8.3.225
+lap==0.5.13
+torch==2.9.0
+scikit-learn==1.8.0
+xgboost==3.2.0
+joblib==1.5.3
+
+# Visualization
+matplotlib==3.10.7
+seaborn==0.13.2
+
+# UI
+streamlit==1.51.0
+
+# Tests
+pytest==8.3.3

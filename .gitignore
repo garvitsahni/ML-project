@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Environments
+.venv/
+venv/
+
+# Datasets & processed data (never commit)
+data/raw/
+data/processed/
+
+# Model weights & bundles (never commit)
+*.pt
+models/*.joblib
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+
+# Temp / uploads
+tmp/
+*.tmp
+app_uploads/

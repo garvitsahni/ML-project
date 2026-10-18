@@ -1,0 +1,22 @@
+# Dataset root paths for CrowdSense AI (Windows).
+# Datasets are placed MANUALLY into data/raw/ (see README for exact layouts).
+# No dataset is ever auto-downloaded by this project.
+#
+# Scope note (2026-10-18): counting datasets (UCF-QNRF, ShanghaiTech) were
+# deliberately excluded by decision — crowd counting runs as a detection-based
+# estimate with NO ground-truth comparison (documented in README Limitations).
+
+raw_root: data/raw
+
+datasets:
+  ucsd_anomaly:
+    path: data/raw/ucsd_anomaly/UCSD_Anomaly_Dataset.v1p2
+    required_subpaths:
+      - UCSDped1
+      - UCSDped2
+
+processed_root: data/processed
+metadata_root: data/metadata
+models_dir: models
+results_dir: reports/results
+figures_dir: reports/figures
