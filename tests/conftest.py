@@ -17,11 +17,31 @@ for _var in (
     "MKL_NUM_THREADS",
     "NUMEXPR_NUM_THREADS",
     "VECLIB_MAXIMUM_THREADS",
+    "OMP_DYNAMIC",
+    "MKL_DYNAMIC",
 ):
     os.environ.setdefault(_var, "1")
+# Hide the GPU: the CUDA-enabled xgboost wheel loads nvdxgdmal64.dll, whose
+# unload race raises 0xC0000005 access violations (see requirements.txt — the
+# project now installs xgboost-cpu instead). Kept as belt-and-braces.
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+# Same race via OpenCV's OpenCL (UMat) path -> NVIDIA driver DLLs. Disable
+# OpenCL before cv2 is imported; all vision code runs on the CPU.
+os.environ.setdefault("OPENCV_OPENCL_RUNTIME", "disabled")
+# Ignore Intel-OpenMP duplicate-runtime detection: loading torch (libiomp)
+# alongside OpenBLAS/OpenCV pools otherwise aborts with access violations.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
 import numpy as np
 import pytest
+
+try:  # keep OpenCV's internal pool from fighting the others
+    import cv2
+
+    cv2.setNumThreads(0)
+    cv2.ocl.setUseOpenCL(False)
+except Exception:  # pragma: no cover - OpenCV always present in practice
+    pass
 
 # Make the project root importable regardless of pytest invocation dir.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

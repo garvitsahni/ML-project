@@ -15,7 +15,10 @@ ultralytics==8.3.225
 lap==0.5.13
 torch==2.9.0
 scikit-learn==1.8.0
-xgboost==3.2.0
+# xgboost-cpu is a drop-in replacement for xgboost (same API/version) WITHOUT the
+# CUDA runtime. The CUDA-enabled xgboost wheel loads nvcuda/nvdxgdmal64.dll, whose
+# driver unload race crashed python.exe intermittently (0xC0000005) during training.
+xgboost-cpu==3.2.0
 joblib==1.5.3
 
 # Visualization
