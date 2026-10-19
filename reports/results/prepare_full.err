@@ -1,0 +1,5 @@
+[ WARN:0@1383.450] global grfmt_tiff.cpp:123 cv::TIFF_Warning PackBitsDecode: Discarding 5 bytes to avoid buffer overrun
+[ WARN:0@1383.646] global grfmt_tiff.cpp:123 cv::TIFF_Warning PackBitsDecode: Discarding 32 bytes to avoid buffer overrun
+[ WARN:0@1654.311] global grfmt_tiff.cpp:123 cv::TIFF_Warning PackBitsDecode: Discarding 11 bytes to avoid buffer overrun
+[ WARN:0@1745.128] global grfmt_tiff.cpp:123 cv::TIFF_Warning PackBitsDecode: Discarding 12 bytes to avoid buffer overrun
+[ERROR:0@1966.060] global grfmt_tiff.cpp:117 cv::TIFF_Error PackBitsDecode: Not enough data for scanline 0
