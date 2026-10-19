@@ -16,7 +16,10 @@ rounded up, or reported without its provenance.
 python -m pip install -r requirements.txt
 
 # 2. Tests (TDD suite: ~124 tests)
-python -m pytest tests/ -q
+#    Prefer the wrapper — it pins native thread pools to 1 and avoids
+#    intermittent OpenMP access-violation crashes on Windows:
+powershell -ExecutionPolicy Bypass -File scripts\run_tests.ps1
+#    (plain `python -m pytest tests/ -q` usually works too, but can flake)
 
 # 3. Inspect the dataset (graceful when absent)
 python scripts/inspect_dataset.py
@@ -110,17 +113,36 @@ Method guarantees:
 ## Artifacts map
 
 ```
+data/processed/
+└── ucsd_windows.parquet + .meta.json   # feature table (gitignored, regenerable)
+models/
+└── {logreg,dt,rf,svm,xgb}.joblib       # schema-versioned bundles (gitignored)
 reports/
-├── processed/ucsd_windows.parquet      # feature table + .meta.json
-├── models/{logreg,dt,rf,svm,xgb}.joblib # schema-versioned bundles
 ├── results/
 │   ├── experiment_ablation.json        # A/B/C per algorithm (val+test)
 │   ├── experiment_algorithms.json      # D comparison
 │   ├── evaluation.json                 # bundle test metrics
-│   ├── exp_e_status.json               # E gate status
-│   └── prepare_full.log                # latest prepare run log
+│   └── exp_e_status.json               # E gate status
 └── figures/*.png                       # confusion/ROC/importance (test split)
 ```
+
+## Headline results (full UCSD, seed 42, 68 train / 15 test sequences, 495 test windows)
+
+Honest test-split numbers — movement features help on every algorithm:
+
+| algorithm | A static only (AUC/F1) | B movement only | C static+movement | C − A (AUC) |
+|-----------|------------------------|-----------------|-------------------|-------------|
+| logreg    | 0.460 / 0.165 | 0.634 / 0.487 | **0.675 / 0.517** | **+0.214** |
+| svm       | 0.407 / 0.192 | 0.643 / 0.419 | 0.651 / 0.424 | **+0.245** |
+| xgb       | 0.436 / 0.309 | 0.623 / 0.424 | 0.602 / 0.373 | +0.166 |
+| rf        | 0.423 / 0.260 | 0.627 / 0.438 | 0.582 / 0.360 | +0.159 |
+| dt        | 0.406 / 0.259 | 0.558 / 0.414 | 0.519 / 0.348 | +0.113 |
+
+Interpretation: static density alone is near-chance for frame-window anomaly
+prediction; temporal movement features carry the signal (best absolute AUC is
+still a modest 0.675 — sequence-held-out anomaly detection on UCSD is hard).
+Reproduce with the Quick start commands; every number above is stored in
+`reports/results/*.json` with its split membership.
 
 ## Project structure
 

@@ -21,7 +21,9 @@ def build_model(name: str, seed: int = 42) -> Pipeline:
     elif name == "dt":
         clf = DecisionTreeClassifier(random_state=seed)
     elif name == "rf":
-        clf = RandomForestClassifier(n_estimators=200, random_state=seed, n_jobs=-1)
+        # n_jobs=1: datasets are tiny (~2k x 15) so parallelism gains nothing,
+        # and loky worker pools cause intermittent native crashes on Windows.
+        clf = RandomForestClassifier(n_estimators=200, random_state=seed, n_jobs=1)
     elif name == "svm":
         clf = SVC(kernel="rbf", probability=True, random_state=seed)
     elif name == "xgb":
@@ -29,7 +31,7 @@ def build_model(name: str, seed: int = 42) -> Pipeline:
 
         clf = XGBClassifier(
             n_estimators=200, max_depth=4, learning_rate=0.1,
-            random_state=seed, eval_metric="logloss", n_jobs=-1,
+            random_state=seed, eval_metric="logloss", n_jobs=1,
         )
     else:
         raise ValueError(f"Unknown algorithm '{name}'. Available: {sorted(ALGORITHMS)}")

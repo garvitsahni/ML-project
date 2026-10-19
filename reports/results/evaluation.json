@@ -1,0 +1,97 @@
+{
+  "n_test_windows": 495,
+  "test_sequences": [
+    "ped1_Test003",
+    "ped1_Test019",
+    "ped1_Test022",
+    "ped1_Test025",
+    "ped1_Test026",
+    "ped1_Test028",
+    "ped1_Test034",
+    "ped1_Train004",
+    "ped1_Train005",
+    "ped1_Train015",
+    "ped1_Train016",
+    "ped1_Train022",
+    "ped2_Test010",
+    "ped2_Train014",
+    "ped2_Train015"
+  ],
+  "bundles": {
+    "dt": {
+      "test_metrics": {
+        "accuracy": 0.5757575757575758,
+        "precision": 0.3916083916083916,
+        "recall": 0.3128491620111732,
+        "f1": 0.34782608695652173,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.5187663531574853
+      },
+      "trained_at": "2026-10-19T11:00:05Z",
+      "n_train": 2254,
+      "bundle": "dt.joblib"
+    },
+    "logreg": {
+      "test_metrics": {
+        "accuracy": 0.7171717171717171,
+        "precision": 0.6756756756756757,
+        "recall": 0.41899441340782123,
+        "f1": 0.5172413793103449,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.6745456474082455
+      },
+      "trained_at": "2026-10-19T11:00:05Z",
+      "n_train": 2254,
+      "bundle": "logreg.joblib"
+    },
+    "rf": {
+      "test_metrics": {
+        "accuracy": 0.5898989898989899,
+        "precision": 0.41304347826086957,
+        "recall": 0.31843575418994413,
+        "f1": 0.35962145110410093,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.5823668764585249
+      },
+      "trained_at": "2026-10-19T11:00:06Z",
+      "n_train": 2254,
+      "bundle": "rf.joblib"
+    },
+    "svm": {
+      "test_metrics": {
+        "accuracy": 0.6484848484848484,
+        "precision": 0.5203252032520326,
+        "recall": 0.3575418994413408,
+        "f1": 0.423841059602649,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.6512092496994554
+      },
+      "trained_at": "2026-10-19T11:00:06Z",
+      "n_train": 2254,
+      "bundle": "svm.joblib"
+    },
+    "xgb": {
+      "test_metrics": {
+        "accuracy": 0.6121212121212121,
+        "precision": 0.44881889763779526,
+        "recall": 0.31843575418994413,
+        "f1": 0.37254901960784315,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.6017961954600098
+      },
+      "trained_at": "2026-10-19T11:00:07Z",
+      "n_train": 2254,
+      "bundle": "xgb.joblib"
+    }
+  }
+}

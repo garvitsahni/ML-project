@@ -4,8 +4,21 @@ Synthetic fixtures are used for UNIT TESTS ONLY and never to report
 research performance (see README "Limitations").
 """
 
+import os
 import sys
 from pathlib import Path
+
+# Pin native thread pools to 1 BEFORE numpy/torch/xgboost/OpenCV import.
+# Mixed OpenMP runtimes (BLAS + torch + xgboost) cause intermittent
+# access-violation crashes inside numpy/matplotlib/cv2 on Windows.
+for _var in (
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
+):
+    os.environ.setdefault(_var, "1")
 
 import numpy as np
 import pytest

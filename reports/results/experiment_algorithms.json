@@ -1,0 +1,202 @@
+{
+  "per_algorithm": {
+    "logreg": {
+      "val": {
+        "accuracy": 0.733615221987315,
+        "precision": 0.7769230769230769,
+        "recall": 0.51010101010101,
+        "f1": 0.6158536585365854,
+        "n_samples": 473,
+        "n_positive": 198,
+        "n_negative": 275,
+        "roc_auc": 0.8312213039485765
+      },
+      "test": {
+        "accuracy": 0.7171717171717171,
+        "precision": 0.6756756756756757,
+        "recall": 0.41899441340782123,
+        "f1": 0.5172413793103449,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.6745456474082455
+      }
+    },
+    "dt": {
+      "val": {
+        "accuracy": 0.7864693446088795,
+        "precision": 0.7771428571428571,
+        "recall": 0.6868686868686869,
+        "f1": 0.7292225201072386,
+        "n_samples": 473,
+        "n_positive": 198,
+        "n_negative": 275,
+        "roc_auc": 0.7725252525252524
+      },
+      "test": {
+        "accuracy": 0.5757575757575758,
+        "precision": 0.3916083916083916,
+        "recall": 0.3128491620111732,
+        "f1": 0.34782608695652173,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.5187663531574853
+      }
+    },
+    "rf": {
+      "val": {
+        "accuracy": 0.8181818181818182,
+        "precision": 0.8294117647058824,
+        "recall": 0.7121212121212122,
+        "f1": 0.7663043478260869,
+        "n_samples": 473,
+        "n_positive": 198,
+        "n_negative": 275,
+        "roc_auc": 0.88188246097337
+      },
+      "test": {
+        "accuracy": 0.5898989898989899,
+        "precision": 0.41304347826086957,
+        "recall": 0.31843575418994413,
+        "f1": 0.35962145110410093,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.5823668764585249
+      }
+    },
+    "svm": {
+      "val": {
+        "accuracy": 0.8224101479915433,
+        "precision": 0.88,
+        "recall": 0.6666666666666666,
+        "f1": 0.7586206896551724,
+        "n_samples": 473,
+        "n_positive": 198,
+        "n_negative": 275,
+        "roc_auc": 0.851937557392103
+      },
+      "test": {
+        "accuracy": 0.6484848484848484,
+        "precision": 0.5203252032520326,
+        "recall": 0.3575418994413408,
+        "f1": 0.423841059602649,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.6512092496994554
+      }
+    },
+    "xgb": {
+      "val": {
+        "accuracy": 0.8054968287526427,
+        "precision": 0.8154761904761905,
+        "recall": 0.6919191919191919,
+        "f1": 0.7486338797814208,
+        "n_samples": 473,
+        "n_positive": 198,
+        "n_negative": 275,
+        "roc_auc": 0.8823691460055095
+      },
+      "test": {
+        "accuracy": 0.6121212121212121,
+        "precision": 0.44881889763779526,
+        "recall": 0.31843575418994413,
+        "f1": 0.37254901960784315,
+        "n_samples": 495,
+        "n_positive": 179,
+        "n_negative": 316,
+        "roc_auc": 0.6017961954600098
+      }
+    }
+  },
+  "seed": 42,
+  "train_sequences": [
+    "ped1_Test001",
+    "ped1_Test002",
+    "ped1_Test004",
+    "ped1_Test006",
+    "ped1_Test007",
+    "ped1_Test009",
+    "ped1_Test010",
+    "ped1_Test011",
+    "ped1_Test012",
+    "ped1_Test013",
+    "ped1_Test014",
+    "ped1_Test015",
+    "ped1_Test016",
+    "ped1_Test017",
+    "ped1_Test018",
+    "ped1_Test020",
+    "ped1_Test021",
+    "ped1_Test023",
+    "ped1_Test024",
+    "ped1_Test030",
+    "ped1_Test031",
+    "ped1_Test032",
+    "ped1_Test033",
+    "ped1_Test035",
+    "ped1_Test036",
+    "ped1_Train001",
+    "ped1_Train003",
+    "ped1_Train006",
+    "ped1_Train007",
+    "ped1_Train008",
+    "ped1_Train009",
+    "ped1_Train010",
+    "ped1_Train011",
+    "ped1_Train012",
+    "ped1_Train013",
+    "ped1_Train014",
+    "ped1_Train017",
+    "ped1_Train018",
+    "ped1_Train019",
+    "ped1_Train020",
+    "ped1_Train021",
+    "ped1_Train023",
+    "ped1_Train025",
+    "ped1_Train027",
+    "ped1_Train029",
+    "ped1_Train030",
+    "ped1_Train031",
+    "ped1_Train032",
+    "ped1_Train033",
+    "ped1_Train034",
+    "ped2_Test002",
+    "ped2_Test003",
+    "ped2_Test005",
+    "ped2_Test006",
+    "ped2_Test008",
+    "ped2_Test011",
+    "ped2_Test012",
+    "ped2_Train001",
+    "ped2_Train002",
+    "ped2_Train003",
+    "ped2_Train004",
+    "ped2_Train005",
+    "ped2_Train007",
+    "ped2_Train008",
+    "ped2_Train009",
+    "ped2_Train010",
+    "ped2_Train012",
+    "ped2_Train013"
+  ],
+  "test_sequences": [
+    "ped1_Test003",
+    "ped1_Test019",
+    "ped1_Test022",
+    "ped1_Test025",
+    "ped1_Test026",
+    "ped1_Test028",
+    "ped1_Test034",
+    "ped1_Train004",
+    "ped1_Train005",
+    "ped1_Train015",
+    "ped1_Train016",
+    "ped1_Train022",
+    "ped2_Test010",
+    "ped2_Train014",
+    "ped2_Train015"
+  ]
+}

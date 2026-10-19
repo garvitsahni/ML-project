@@ -30,3 +30,7 @@ Desktop.ini
 tmp/
 *.tmp
 app_uploads/
+
+# Logs
+reports/results/*.log
+reports/results/*.err

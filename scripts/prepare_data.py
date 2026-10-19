@@ -25,7 +25,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=None)
     parser.add_argument("--out", type=Path, default=None,
-                        help="Output parquet (default: reports/processed/ucsd_windows.parquet)")
+                        help="Output parquet (default: data/processed/ucsd_windows.parquet)")
     parser.add_argument("--window", type=int, default=30)
     parser.add_argument("--stride", type=int, default=5)
     parser.add_argument("--grid", type=int, default=4)
