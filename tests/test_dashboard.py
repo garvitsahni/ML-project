@@ -69,6 +69,33 @@ def test_model_status_badge_pure(tmp_path):
     assert "logreg" in text2
 
 
+def test_photo_page_decodes_upload_and_analyzes_in_memory():
+    """Regression: the photo page must analyze the decoded ndarray in memory
+    (analyze_frame) — it previously passed the array to analyze_image, which
+    only accepts disk paths, so every upload crashed with a TypeError."""
+    import numpy as np
+
+    from src.detection.detector import Detection, DetectionResult
+    from src.ui import page_photo
+
+    class FakeDetector:
+        def detect(self, frame):
+            h, w = frame.shape[:2]
+            return DetectionResult(
+                detections=(Detection(x1=10, y1=10, x2=30, y2=40, conf=0.9, cls_id=0),),
+                inference_time_s=0.0,
+                model_name="fake",
+                image_shape=(h, w),
+            )
+
+    img = np.zeros((64, 96, 3), dtype=np.uint8)
+    ok, buf = __import__("cv2").imencode(".png", img)
+    assert ok
+    image, analysis = page_photo.analyze_upload(buf.tobytes(), detector=FakeDetector())
+    assert analysis.count == 1
+    assert image.shape[:2] == (64, 96)
+
+
 def test_streamlit_headless_smoke(project_root):
     """App must start headless with no traceback within ~8s."""
     port = 8599
