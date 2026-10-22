@@ -72,16 +72,19 @@ class PersonDetector:
         model_path: Path | str | None = None,
         conf: float = 0.25,
         device: str = "cpu",
+        imgsz: int = 640,
     ):
         self.model_path = Path(model_path) if model_path is not None else DEFAULT_WEIGHTS
         self.conf = conf
         self.device = device
+        self.imgsz = imgsz
 
     def detect(self, image: np.ndarray) -> DetectionResult:
         if image is None or image.size == 0:
             raise ValueError("detect() requires a non-empty image array")
         model, device = _load_model(str(self.model_path.resolve()), self.device)
-        results = model.predict(image, conf=self.conf, device=device, verbose=False)[0]
+        results = model.predict(image, conf=self.conf, device=device,
+                                imgsz=self.imgsz, verbose=False)[0]
         detections: list[Detection] = []
         if results.boxes is not None and len(results.boxes) > 0:
             xyxy = results.boxes.xyxy.cpu().numpy()
