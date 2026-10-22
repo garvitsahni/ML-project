@@ -6,13 +6,14 @@ import streamlit as st
 
 from src.config import load_paths
 from src.preprocessing.camera import CameraUnavailableError
+from src.ui.theme import page_header
 
 
 def render() -> None:
-    st.header("Live Camera")
-    st.caption(
+    page_header(
+        "Live Camera", "📹",
         "Rolling 30-frame window of density + movement features from a webcam. "
-        "Requires a physical camera; graceful status when unavailable."
+        "Requires a physical camera; graceful status when unavailable.",
     )
     device = st.number_input("Camera device index", min_value=0, max_value=10, value=0)
     stride = st.slider("Frame stride", 1, 5, 2)

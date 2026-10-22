@@ -11,6 +11,7 @@ from src.detection.analyze import analyze_frame
 from src.features.schema import FeatureSchema
 from src.features.static import static_features
 from src.ui.common import find_model_path, load_model_algorithm
+from src.ui.theme import page_header
 
 _MAX_SIDE = 1280
 
@@ -42,10 +43,10 @@ def analyze_upload(data: bytes, detector=None, grid_size: int = 4) -> tuple:
 
 
 def render() -> None:
-    st.header("Photo Analysis")
-    st.caption(
-        "Static analysis of one frame. Movement/temporal outputs require "
-        "Video Analysis — a single image has no tracks or flow."
+    page_header(
+        "Photo Analysis", "🖼️",
+        "Static analysis of one frame — movement and temporal outputs need "
+        "Video Analysis; a single image has no tracks or flow.",
     )
     uploaded = st.file_uploader("Image", type=["jpg", "jpeg", "png", "tif", "bmp"])
     if uploaded is None:
@@ -70,7 +71,7 @@ def render() -> None:
         )
     st.metric("Detected persons (detector estimate — no counting GT exists)", analysis.count)
     st.subheader("Density grid")
-    st.dataframe(analysis.grid_counts, use_container_width=True)
+    st.dataframe(analysis.grid_counts, width="stretch")
     st.subheader("Static features")
     import numpy as np
 

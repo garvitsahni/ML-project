@@ -9,6 +9,7 @@ import time
 import streamlit as st
 
 from src.config import PROJECT_ROOT
+from src.ui.theme import page_header
 
 STEPS = [
     ("Inspect dataset", [sys.executable, "scripts/inspect_dataset.py"]),
@@ -19,10 +20,10 @@ STEPS = [
 
 
 def render() -> None:
-    st.header("Training & Evaluation")
-    st.caption(
-        "Each step runs the project's real CLI script in a subprocess and tails its "
-        "stdout. Nothing here is simulated."
+    page_header(
+        "Training & Evaluation", "⚙️",
+        "Each step runs the project's real CLI script in a subprocess and tails "
+        "its stdout. Nothing here is simulated.",
     )
     for label, cmd in STEPS:
         with st.expander(label):

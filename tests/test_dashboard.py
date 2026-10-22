@@ -123,6 +123,17 @@ def test_model_caveat_mentions_methodology_and_estimates():
     assert "estimate" in text.lower()
 
 
+def test_nav_group_labels():
+    labels = common.nav_group_labels([
+        ("Learn", ["Overview", "Methodology"]),
+        ("Analyze", ["Photo Analysis"]),
+    ])
+    assert labels == [
+        "Learn — Overview · Methodology",
+        "Analyze — Photo Analysis",
+    ]
+
+
 def test_streamlit_headless_smoke(project_root):
     """App must start headless with no traceback within ~8s."""
     port = 8599

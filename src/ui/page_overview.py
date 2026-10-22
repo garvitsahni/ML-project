@@ -5,10 +5,14 @@ from __future__ import annotations
 import streamlit as st
 
 from src.ui.common import RESULTS_DIR, find_model_path, limitations
+from src.ui.theme import page_header
 
 
 def render() -> None:
-    st.header("Overview")
+    page_header(
+        "Overview", "🧭",
+        "Research question, pipeline, and what this project does not claim",
+    )
     st.markdown(
         """
 **Research question:** do temporal movement features (speed, direction, optical flow,

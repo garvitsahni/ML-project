@@ -7,11 +7,14 @@ import streamlit as st
 from src.config import load_paths
 from src.datasets.ucsd_anomaly import UcsdAdapter
 from src.ui.common import ucSD_placement_hint
+from src.ui.theme import page_header
 
 
 def render() -> None:
-    st.header("Dataset Explorer")
-    st.caption("Live inspection via `UcsdAdapter` — nothing is downloaded or fabricated.")
+    page_header(
+        "Dataset Explorer", "📂",
+        "Live inspection via `UcsdAdapter` — nothing is downloaded or fabricated.",
+    )
     try:
         adapter = UcsdAdapter(root=load_paths().ucsd_dir)
         seqs = list(adapter.iter_sequences())

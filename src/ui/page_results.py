@@ -7,6 +7,7 @@ import json
 import streamlit as st
 
 from src.ui.common import FIGURES_DIR, RESULTS_DIR, list_result_files
+from src.ui.theme import page_header
 
 COMMAND_HINTS = {
     "experiment_ablation.json": "python scripts/train_ml.py",
@@ -17,10 +18,10 @@ COMMAND_HINTS = {
 
 
 def render() -> None:
-    st.header("Research Results")
-    st.caption(
-        "Every value shown here was computed by this project's scripts on the UCSD "
-        "dataset. Missing outputs show the exact command that produces them."
+    page_header(
+        "Research Results", "📊",
+        "Every value shown here was computed by this project's scripts on the "
+        "UCSD dataset. Missing outputs show the exact command that produces them.",
     )
     json_files = list_result_files(RESULTS_DIR, suffix=".json")
     if not json_files:
@@ -81,7 +82,7 @@ def _render_experiment(name: str, payload: dict) -> None:
             rows.append({"algorithm": algo, "f1": m.get("f1"), "roc_auc": m.get("roc_auc"),
                          "n_test": m.get("n_samples")})
     if rows:
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(rows), width="stretch")
     seqs = payload.get("train_sequences") or payload.get("test_sequences")
     if seqs:
         with st.expander("split membership"):

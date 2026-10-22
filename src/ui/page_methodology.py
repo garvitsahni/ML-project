@@ -8,10 +8,14 @@ import streamlit as st
 
 from src.config import PROJECT_ROOT
 from src.ui.common import RESULTS_DIR, limitations
+from src.ui.theme import page_header
 
 
 def render() -> None:
-    st.header("Methodology & Limitations")
+    page_header(
+        "Methodology & Limitations", "🔬",
+        "How every number here is produced — and where it breaks",
+    )
     st.markdown(
         """
 **Features (15 total, canonical schema in `src/features/schema.py`):**

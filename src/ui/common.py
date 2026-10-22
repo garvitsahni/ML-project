@@ -77,6 +77,11 @@ def model_caveat() -> str:
     )
 
 
+def nav_group_labels(groups: list[tuple[str, list[str]]]) -> list[str]:
+    """Sidebar legend lines from (group name, page names) pairs."""
+    return [f"{name} — " + " · ".join(pages) for name, pages in groups]
+
+
 def limitations() -> list[str]:
     """Real, current project limitations — shown on Methodology + Overview."""
     return [

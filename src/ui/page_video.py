@@ -14,6 +14,7 @@ from src.features.schema import FeatureSchema
 from src.inference.service import InferenceError, InferenceService
 from src.preprocessing.video import InvalidVideoError, iter_video_frames
 from src.ui.common import find_model_path, interpret_prediction, model_caveat
+from src.ui.theme import page_header
 
 VIDEO_TYPES = ["mp4", "avi", "mov", "mkv"]
 
@@ -95,10 +96,10 @@ def _process_video(meta: _VideoMeta, cfg: WindowConfig, progress) -> list[dict]:
 
 
 def render() -> None:
-    st.header("Video Analysis")
-    st.caption(
+    page_header(
+        "Video Analysis", "🎬",
         "Sliding-window (30 frames, stride 5) density + movement features; "
-        "model output only if a compatible trained bundle exists."
+        "model output only if a compatible trained bundle exists.",
     )
     uploaded = st.file_uploader("Video", type=VIDEO_TYPES)
     if uploaded is None:
@@ -161,14 +162,14 @@ def render() -> None:
             })
             st.subheader("Model predictions (schema-strict)")
             st.caption(f"model: {svc.bundle.algorithm} · trained {svc.bundle.trained_at}")
-            st.dataframe(out, use_container_width=True)
+            st.dataframe(out, width="stretch")
             st.line_chart(out.set_index("window")["anomaly score"])
             st.caption(model_caveat())
         except (InferenceError, ValueError) as exc:
             st.warning(f"Model not usable on this data: {exc}")
 
     with st.expander("Feature table"):
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
         st.download_button(
             "Download windows CSV", df.to_csv(index=False), "crowd windows.csv", "text/csv"
         )
