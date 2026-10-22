@@ -201,3 +201,46 @@ def test_run_attribution_baseline_uses_original_15(tmp_path):
     result = run_attribution(_attr_table(), seed=42, results_dir=tmp_path)
     assert result["baseline_old15_new_detector"]["columns"] == ORIGINAL_15
     assert len(result["schema_v2_untuned"]["columns"]) > 15
+
+
+# ---------------------------------------------------- label robustness (val-only)
+def test_label_robustness_missing_column_raises(table, tmp_path):
+    from src.experiments.runner import label_robustness_experiment
+
+    with pytest.raises(ValueError, match="label_frac.*rebuild"):
+        label_robustness_experiment(table, ExperimentConfig(
+            results_dir=tmp_path, figures_dir=tmp_path / "f", seed=42,
+            algorithms=("logreg",)))
+
+
+def test_label_robustness_reports_both_variants(tmp_path):
+    from src.experiments.runner import label_robustness_experiment
+
+    df = _attr_table()
+    cfg = ExperimentConfig(results_dir=tmp_path, figures_dir=tmp_path / "f",
+                           seed=42, algorithms=("logreg",))
+    out = label_robustness_experiment(df, cfg)
+    for variant in ("any_frame", "strict_frac_0.2"):
+        assert "roc_auc" in out["variants"][variant]
+        assert "f1" in out["variants"][variant]
+    assert out["val_sequence_ids"]
+    assert (tmp_path / "experiment_label_robustness.json").is_file()
+
+
+def test_label_robustness_never_reads_test(tmp_path):
+    from src.experiments.runner import label_robustness_experiment
+    from src.models.splitting import grouped_split
+
+    df = _attr_table()
+    split = grouped_split(df["sequence_id"].to_numpy(), seed=42)
+    test_seqs = set(df["sequence_id"].iloc[split.test])
+    # corrupt ONLY the grouped-test rows: result must be identical
+    poisoned = df.copy()
+    mask = poisoned["sequence_id"].isin(test_seqs)
+    poisoned.loc[mask, "label"] = 1 - poisoned.loc[mask, "label"]
+    poisoned.loc[mask, "label_frac"] = 1.0
+    cfg = ExperimentConfig(results_dir=tmp_path, figures_dir=tmp_path / "f",
+                           seed=42, algorithms=("logreg",))
+    out1 = label_robustness_experiment(df, cfg)
+    out2 = label_robustness_experiment(poisoned, cfg)
+    assert out1["variants"] == out2["variants"]
