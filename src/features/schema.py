@@ -37,6 +37,13 @@ _MOVEMENT = [
     ("flow_std_pxf", "px/frame", "within-window optical-flow variability"),
     ("track_count", "count", "unique ByteTrack ids in window"),
     ("track_persistence", "fraction 0-1", "mean track visibility across window frames"),
+    ("nn_distance_mean", "normalized 0-1", "mean nearest-neighbor distance / image diagonal; 0 with <2 centers"),
+    ("nn_distance_std", "normalized 0-1", "frame-to-frame variability of mean NN distance"),
+    ("abrupt_stop_fraction", "fraction 0-1", "tracks decelerating hard within window; 0 with <3 speed samples"),
+    ("direction_reversal_rate", "fraction 0-1", "consecutive-step direction flips >110 deg per step pair"),
+    ("fast_mover_fraction", "fraction 0-1", "tracks >3x scene median speed (intruder proxy)"),
+    ("speed_p90", "px/frame", "90th percentile track speed; NEVER m/s"),
+    ("track_turnover_rate", "tracks/frame", "track births+deaths per frame in window"),
 ]
 
 
