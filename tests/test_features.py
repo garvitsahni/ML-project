@@ -121,7 +121,7 @@ def test_direction_entropy_uniform_is_high():
 # ---------------------------------------------------------------- optical flow
 def test_optical_flow_static_image_near_zero():
     img = np.full((64, 64), 128, dtype=np.uint8)
-    mean, std = optical_flow_stats(img, img.copy())
+    mean, std, _ = optical_flow_stats(img, img.copy())
     assert mean == pytest.approx(0.0, abs=1e-6)
 
 
@@ -129,7 +129,7 @@ def test_optical_flow_translated_image_positive():
     rng = np.random.default_rng(1)
     img = rng.integers(0, 255, size=(64, 64), dtype=np.uint8)
     shifted = np.roll(img, shift=3, axis=1)  # move right 3px
-    mean, std = optical_flow_stats(img, shifted)
+    mean, std, _ = optical_flow_stats(img, shifted)
     assert mean > 0.5  # a constant 3px shift should register clear motion
 
 
@@ -305,3 +305,39 @@ def test_track_turnover_rate_degenerate():
     from src.features.movement import track_turnover_rate
 
     assert track_turnover_rate(TrajectoryStore(), [], 0, 10) == 0.0
+
+
+# ------------------------------------------------- flow-direction inconsistency
+def test_flow_dir_inconsistency_uniform_translation_near_zero():
+    rng = np.random.default_rng(2)
+    img = rng.integers(0, 255, size=(64, 64), dtype=np.uint8)
+    shifted = np.roll(img, shift=3, axis=1)
+    mean, std, dir_inc = optical_flow_stats(img, shifted)
+    assert dir_inc == pytest.approx(0.0, abs=0.15)  # all flow points one way
+
+
+def test_flow_dir_inconsistency_static_is_zero():
+    img = np.full((64, 64), 128, dtype=np.uint8)
+    _, _, dir_inc = optical_flow_stats(img, img.copy())
+    assert dir_inc == 0.0  # no motion pixels -> 0 by definition
+
+
+def test_schema_v2_includes_flow_direction_inconsistency():
+    schema = FeatureSchema.default()
+    assert "flow_direction_inconsistency" in schema.names
+    spec = next(s for s in schema.specs if s.name == "flow_direction_inconsistency")
+    assert spec.group == "movement"
+
+
+def test_extract_window_features_flow_dir_mean():
+    schema = FeatureSchema.default()
+    signals = [
+        FrameSignals(frame_index=f, count=1,
+                     grid_counts=np.array([[1, 0], [0, 0]]),
+                     centers=np.array([[20.0, 30.0]]),
+                     flow_mean=0.0, flow_std=0.0, flow_dir_inconsistency=v)
+        for f, v in enumerate([0.2, 0.4])
+    ]
+    feats = extract_window_features(signals, TrajectoryStore(),
+                                    schema=schema, frame_shape=FRAME_SHAPE)
+    assert feats["flow_direction_inconsistency"] == pytest.approx(0.3)

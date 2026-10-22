@@ -44,6 +44,7 @@ _MOVEMENT = [
     ("fast_mover_fraction", "fraction 0-1", "tracks >3x scene median speed (intruder proxy)"),
     ("speed_p90", "px/frame", "90th percentile track speed; NEVER m/s"),
     ("track_turnover_rate", "tracks/frame", "track births+deaths per frame in window"),
+    ("flow_direction_inconsistency", "normalized 0-1", "1 - |mean flow direction| over motion pixels; 0 with no motion"),
 ]
 
 

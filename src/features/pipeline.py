@@ -96,9 +96,9 @@ def process_sequence(
         centers = np.array([p.center for p in persons], dtype=float).reshape(-1, 2)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if prev_gray is None:
-            flow_mean, flow_std = 0.0, 0.0
+            flow_mean, flow_std, flow_dir_inc = 0.0, 0.0, 0.0
         else:
-            flow_mean, flow_std = optical_flow_stats(prev_gray, gray)
+            flow_mean, flow_std, flow_dir_inc = optical_flow_stats(prev_gray, gray)
         prev_gray = gray
         signals.append(
             FrameSignals(
@@ -108,6 +108,7 @@ def process_sequence(
                 centers=centers,
                 flow_mean=flow_mean,
                 flow_std=flow_std,
+                flow_dir_inconsistency=flow_dir_inc,
             )
         )
 

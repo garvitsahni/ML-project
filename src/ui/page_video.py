@@ -73,12 +73,12 @@ def _process_video(meta: _VideoMeta, cfg: WindowConfig, progress) -> list[dict]:
         persons_by_frame[len(signals)] = persons
         centers = np.array([p.center for p in persons], float).reshape(-1, 2)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        fm, fs = (0.0, 0.0) if prev_gray is None else optical_flow_stats(prev_gray, gray)
+        fm, fs, fdi = (0.0, 0.0, 0.0) if prev_gray is None else optical_flow_stats(prev_gray, gray)
         prev_gray = gray
         signals.append(FrameSignals(
             frame_index=len(signals), count=len(result.detections),
             grid_counts=_centers_to_grid(centers, (h, w), cfg.grid_size),
-            centers=centers, flow_mean=fm, flow_std=fs,
+            centers=centers, flow_mean=fm, flow_std=fs, flow_dir_inconsistency=fdi,
         ))
         progress.progress(min(1.0, len(signals) / max(1, meta.n_frames)))
 

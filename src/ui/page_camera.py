@@ -79,12 +79,12 @@ def _run_capture(device: int, stride: int, cap_seconds: int) -> None:
             persons_by_frame[len(signals)] = persons
             centers = np.array([p.center for p in persons], float).reshape(-1, 2)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            fm, fs = (0.0, 0.0) if prev_gray is None else optical_flow_stats(prev_gray, gray)
+            fm, fs, fdi = (0.0, 0.0, 0.0) if prev_gray is None else optical_flow_stats(prev_gray, gray)
             prev_gray = gray
             signals.append(FrameSignals(
                 frame_index=len(signals), count=len(result.detections),
                 grid_counts=_centers_to_grid(centers, (h, w), 4),
-                centers=centers, flow_mean=fm, flow_std=fs,
+                centers=centers, flow_mean=fm, flow_std=fs, flow_dir_inconsistency=fdi,
             ))
             frame_slot.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", width="stretch")
             if len(signals) >= window:

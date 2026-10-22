@@ -28,16 +28,26 @@ class FrameSignals:
     centers: np.ndarray  # (n, 2) xy pixels
     flow_mean: float  # Farneback mean magnitude vs previous frame (0 for first)
     flow_std: float
+    flow_dir_inconsistency: float = 0.0  # 1 - |mean unit flow dir| (0 for first)
 
 
-def optical_flow_stats(prev_gray: np.ndarray, gray: np.ndarray) -> tuple[float, float]:
-    """Farneback dense flow between two gray frames -> (mean, std) magnitude."""
+def optical_flow_stats(prev_gray: np.ndarray, gray: np.ndarray) -> tuple[float, float, float]:
+    """Farneback dense flow -> (mean magnitude, std magnitude, direction inconsistency).
+
+    Direction inconsistency = 1 - |mean unit direction| over pixels moving
+    > 0.5 px/frame; 0.0 when no qualifying pixels.
+    """
     flow = cv2.calcOpticalFlowFarneback(
         prev_gray, gray, None, pyr_scale=0.5, levels=3, winsize=15,
         iterations=3, poly_n=5, poly_sigma=1.2, flags=0,
     )
     mag = np.linalg.norm(flow, axis=2)
-    return float(mag.mean()), float(mag.std())
+    moving = mag > 0.5
+    if not moving.any():
+        return float(mag.mean()), float(mag.std()), 0.0
+    units = flow[moving] / mag[moving, None]
+    dir_inc = 1.0 - float(np.linalg.norm(units.mean(axis=0)))
+    return float(mag.mean()), float(mag.std()), dir_inc
 
 
 def _third_mean(values: np.ndarray) -> float:
@@ -91,6 +101,9 @@ def extract_window_features(
     feats["directional_consistency"] = directional_consistency(store, track_ids)
     feats["flow_mean_magnitude"] = float(np.mean([s.flow_mean for s in signals]))
     feats["flow_std_pxf"] = float(np.mean([s.flow_std for s in signals]))
+    feats["flow_direction_inconsistency"] = float(
+        np.mean([s.flow_dir_inconsistency for s in signals])
+    )
     feats["track_count"] = float(len(track_ids))
     if track_ids:
         feats["track_persistence"] = float(
