@@ -9,6 +9,7 @@ split:
 detection:
   model: yolov8n.pt
   conf: 0.25
+  imgsz: 640            # YOLO inference size; updated by scripts/calibrate_detection.py
   iou: 0.45
   person_class_id: 0
   device: cpu

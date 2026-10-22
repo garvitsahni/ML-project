@@ -24,6 +24,20 @@ def test_inspect_help(project_root):
     assert r.returncode == 0
 
 
+def test_prepare_detection_defaults_from_yaml():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "prepare_data", SCRIPTS / "prepare_data.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    conf, imgsz = mod.resolve_detection_defaults(
+        {"detection": {"conf": 0.10, "imgsz": 1280}})
+    assert conf == 0.10 and imgsz == 1280
+    with pytest.raises(KeyError):
+        mod.resolve_detection_defaults({"detection": {"conf": 0.10}})
+
+
 def test_inspect_graceful_when_root_absent(project_root, tmp_path):
     r = _run(["scripts/inspect_dataset.py", "--root", str(tmp_path / "empty")], project_root)
     assert r.returncode != 0
