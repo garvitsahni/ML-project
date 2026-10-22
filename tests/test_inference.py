@@ -72,3 +72,56 @@ def test_row_order_follows_schema(service):
     assert res.label in (0, 1)  # reordering must not change anything
     res2 = service.predict_row(_row())
     assert res.score == pytest.approx(res2.score)
+
+
+def _threshold_bundle_path(tmp_path, threshold):
+    schema = FeatureSchema.default()
+    rng = np.random.default_rng(0)
+    n = 60
+    X = rng.normal(size=(n, len(schema.names)))
+    X[:, schema.names.index("person_count")] = np.r_[np.full(n // 2, 25.0), np.full(n - n // 2, 2.0)]
+    y = np.r_[np.ones(n // 2, int), np.zeros(n - n // 2, int)]
+    bundle = ModelBundle(
+        model=train_model("logreg", X, y, seed=42),
+        feature_names=list(schema.names),
+        algorithm="logreg",
+        trained_at="2026-10-18T00:00:00",
+        n_train=n, metrics={}, threshold=threshold,
+    )
+    return save_bundle(bundle, tmp_path / f"m{threshold}.joblib")
+
+
+def test_threshold_roundtrip_and_behavior(tmp_path):
+    from src.models.bundle import load_bundle
+
+    base = InferenceService(_threshold_bundle_path(tmp_path, 0.5))
+    score = base.predict_row(_row()).score
+    assert base.predict_row(_row()).label == 1  # default threshold keeps positive
+    above = score + 0.05
+    path = _threshold_bundle_path(tmp_path, above)
+    assert load_bundle(path).threshold == above  # persistence round-trip
+    # same row, threshold above its score -> downgraded to 0
+    assert InferenceService(path).predict_row(_row()).label == 0
+
+
+def test_bundle_without_threshold_key_defaults_to_half(tmp_path):
+    import joblib
+
+    from src.models.bundle import load_bundle
+
+    schema = FeatureSchema.default()
+    path = _threshold_bundle_path(tmp_path, 0.5)
+    data = joblib.load(path)
+    del data["threshold"]
+    old = tmp_path / "old.joblib"
+    joblib.dump(data, old)
+    assert load_bundle(old).threshold == 0.5
+
+
+def test_score_equal_to_threshold_is_positive(tmp_path):
+    svc = InferenceService(_threshold_bundle_path(tmp_path, 0.5))
+    row = _row()
+    res = svc.predict_row(row)
+    # craft threshold exactly at the score -> label must be 1 (>= semantics)
+    svc.bundle.threshold = res.score
+    assert svc.predict_row(row).label == 1

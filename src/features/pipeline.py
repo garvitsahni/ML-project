@@ -27,7 +27,7 @@ from src.preprocessing.video import read_frame
 from src.tracking.tracker import CrowdTracker, TrackedPerson
 from src.tracking.trajectories import TrajectoryStore
 
-META_COLUMNS = ["sequence_id", "part", "split", "window_start", "window_end", "label"]
+META_COLUMNS = ["sequence_id", "part", "split", "window_start", "window_end", "label", "label_frac"]
 
 
 @dataclass(frozen=True)
@@ -129,6 +129,7 @@ def process_sequence(
             "window_start": start,
             "window_end": end,
             "label": int(labels[start:end].any()),
+            "label_frac": float(labels[start:end].mean()),
         }
         row.update(feats)
         rows.append(row)

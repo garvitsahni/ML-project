@@ -54,15 +54,20 @@ class InferenceService:
         return np.array([float(row[n]) for n in self.bundle.feature_names], dtype=float)
 
     def predict_row(self, row: dict) -> InferenceResult:
-        """Score one window's feature row -> label + anomaly score."""
+        """Score one window's feature row -> label + anomaly score.
+
+        Label = 1 iff P(anomaly) >= bundle.threshold; models without
+        predict_proba fall back to the estimator's own predict().
+        """
         x = self._to_vector(row).reshape(1, -1)
         model = self.bundle.model
-        label = int(model.predict(x)[0])
         if hasattr(model, "predict_proba"):
             classes = list(getattr(model, "classes_", [0, 1]))
             proba = model.predict_proba(x)[0]
-            score = float(proba[classes.index(1)]) if 1 in classes else float(label)
+            score = float(proba[classes.index(1)]) if 1 in classes else float(model.predict(x)[0])
+            label = int(score >= self.bundle.threshold)
         else:
+            label = int(model.predict(x)[0])
             score = float(label)
         return InferenceResult(
             label=label,
