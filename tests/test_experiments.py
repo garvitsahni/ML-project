@@ -137,3 +137,67 @@ def test_missing_labels_for_e_reports_reason(tmp_path):
     status = json.loads((tmp_path / "exp_e_status.json").read_text(encoding="utf-8"))
     assert status["status"] == "not_supported"
     assert "labels" in status["reason"].lower() or "ground" in status["reason"].lower()
+
+
+# ------------------------------------------------------------- attribution
+ATTRIBUTION_CONFIGS = {
+    "baseline_old15_new_detector",
+    "schema_v2_untuned",
+    "tuned_threshold",
+    "ensemble_final",
+}
+
+
+def _attr_table(n_seq: int = 10, windows_per_seq: int = 8, seed: int = 0) -> pd.DataFrame:
+    """Synthetic v2 table with label_frac and a separable signal."""
+    rng = np.random.default_rng(seed)
+    schema = FeatureSchema.default()
+    rows = []
+    for s in range(n_seq):
+        label_seq = s >= n_seq // 2
+        for w in range(windows_per_seq):
+            feats = {name: float(rng.normal()) for name in schema.names}
+            feats["person_count"] = 25.0 if label_seq else 2.0
+            rows.append({
+                "sequence_id": f"seq{s:02d}", "part": "ped1",
+                "split": "test" if label_seq else "train",
+                "window_start": w * 5, "window_end": w * 5 + 30,
+                "label": int(label_seq),
+                "label_frac": 1.0 if label_seq else 0.0,
+                **feats,
+            })
+    return pd.DataFrame(rows)
+
+
+def test_run_attribution_four_configs_same_split(tmp_path):
+    from src.experiments.attribution import run_attribution
+
+    result = run_attribution(_attr_table(), seed=42, results_dir=tmp_path)
+    assert set(result) == ATTRIBUTION_CONFIGS
+    # identical split membership across configs
+    splits = {cfg: tuple(payload["test_sequence_ids"]) for cfg, payload in result.items()}
+    assert len(set(splits.values())) == 1
+
+
+def test_run_attribution_payload_contents(tmp_path):
+    from src.experiments.attribution import run_attribution
+
+    result = run_attribution(_attr_table(), seed=42, results_dir=tmp_path)
+    for cfg, payload in result.items():
+        assert 0.0 < payload["threshold"] <= 1.0
+        assert "test_metrics" in payload and "val_metrics" in payload
+        meta = {"label", "label_frac", "sequence_id", "part", "split",
+                "window_start", "window_end"}
+        assert not (set(payload["columns"]) & meta), f"{cfg} uses meta columns"
+    assert len(result["ensemble_final"]["members"]) == 3
+    out = tmp_path / "experiment_attribution.json"
+    assert out.is_file()  # provenance written
+
+
+def test_run_attribution_baseline_uses_original_15(tmp_path):
+    from src.experiments.attribution import ORIGINAL_15, run_attribution
+
+    assert len(ORIGINAL_15) == 15
+    result = run_attribution(_attr_table(), seed=42, results_dir=tmp_path)
+    assert result["baseline_old15_new_detector"]["columns"] == ORIGINAL_15
+    assert len(result["schema_v2_untuned"]["columns"]) > 15
