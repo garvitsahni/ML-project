@@ -9,9 +9,15 @@ import cv2
 import numpy as np
 
 from src.features.movement import (
+    abrupt_stop_fraction,
     directional_consistency,
     direction_entropy,
+    direction_reversal_rate,
+    fast_mover_fraction,
     movement_speeds_from_trajectories,
+    nearest_neighbor_stats,
+    speed_p90,
+    track_turnover_rate,
 )
 from src.features.schema import FeatureSchema
 from src.features.static import static_features
@@ -99,6 +105,7 @@ def extract_window_features(
         feats["speed_std_pxf"] = float(speeds.std()) if speeds.size >= 2 else 0.0
     feats["direction_entropy"] = direction_entropy(store, track_ids)
     feats["directional_consistency"] = directional_consistency(store, track_ids)
+    feats["direction_reversal_rate"] = direction_reversal_rate(store, track_ids)
     feats["flow_mean_magnitude"] = float(np.mean([s.flow_mean for s in signals]))
     feats["flow_std_pxf"] = float(np.mean([s.flow_std for s in signals]))
     feats["flow_direction_inconsistency"] = float(
@@ -109,5 +116,15 @@ def extract_window_features(
         feats["track_persistence"] = float(
             np.mean([store.persistence(tid) for tid in track_ids])
         )
+    feats["speed_p90"] = speed_p90(store, track_ids)
+    median_speed = float(np.median(speeds)) if speeds.size else 0.0
+    feats["abrupt_stop_fraction"] = abrupt_stop_fraction(store, track_ids, median_speed)
+    feats["fast_mover_fraction"] = fast_mover_fraction(store, track_ids, median_speed)
+    fmin, fmax = store.frame_range
+    feats["track_turnover_rate"] = track_turnover_rate(store, track_ids, fmin, fmax + 1)
+    centers_by_frame = {s.frame_index: s.centers for s in signals if s.centers.size >= 2}
+    feats["nn_distance_mean"], feats["nn_distance_std"] = nearest_neighbor_stats(
+        store, track_ids, centers_by_frame, image_diagonal=float(np.hypot(h, w))
+    )
 
     return feats

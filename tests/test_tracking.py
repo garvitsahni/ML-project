@@ -60,6 +60,12 @@ def test_track_ids(store):
     assert sorted(store.track_ids()) == [1, 2]
 
 
+def test_frame_range(store):
+    assert store.frame_range == (0, 3)
+    empty = TrajectoryStore()
+    assert empty.frame_range == (0, 0)
+
+
 def test_trajectory_points_and_centers(store):
     traj = store.trajectory(1)
     assert traj.shape == (4, 3)  # frame, cx, cy

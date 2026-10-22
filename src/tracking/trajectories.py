@@ -38,6 +38,16 @@ class TrajectoryStore:
     def total_frames(self) -> int:
         return len(self._frames)
 
+    @property
+    def frame_range(self) -> tuple[int, int]:
+        """(first, last) frame index added; (0, 0) when empty.
+
+        Covers person-less frames too — every add_frame call counts.
+        """
+        if not self._frames:
+            return (0, 0)
+        return (min(self._frames), max(self._frames))
+
     def add_frame(self, frame_index: int, persons: Sequence[TrackedPerson]) -> None:
         self._frames.add(frame_index)
         for p in persons:

@@ -341,3 +341,46 @@ def test_extract_window_features_flow_dir_mean():
     feats = extract_window_features(signals, TrajectoryStore(),
                                     schema=schema, frame_shape=FRAME_SHAPE)
     assert feats["flow_direction_inconsistency"] == pytest.approx(0.3)
+
+
+def test_extract_window_features_wires_v2_movement_features():
+    """Regression: the 7 schema-v2 features must be COMPUTED by the window
+    aggregation (they once sat at their initialized 0.0 in the real table)."""
+    schema = FeatureSchema.default()
+    store = TrajectoryStore()
+    signals = []
+
+    def _persons(f):
+        t1_x = float(f)                       # slow steady, speed 1
+        t2_x = 10.0 + 10.0 * f                # fast mover, speed 10
+        t3_x = [0.0, 4.0, 8.0, 12.0, 12.5, 12.75][f]  # abrupt stop
+        t4_x = [0.0, 2.0, 4.0, 3.0, 2.0, 1.0][f]      # direction reversal
+        out = [
+            TrackedPerson(track_id=1, x1=t1_x, y1=0, x2=t1_x + 20, y2=20, conf=0.9),
+            TrackedPerson(track_id=2, x1=t2_x, y1=25, x2=t2_x + 20, y2=45, conf=0.9),
+            TrackedPerson(track_id=3, x1=t3_x, y1=50, x2=t3_x + 20, y2=70, conf=0.9),
+            TrackedPerson(track_id=4, x1=t4_x, y1=75, x2=t4_x + 20, y2=95, conf=0.9),
+        ]
+        if f >= 3:                            # track 5 born mid-window -> turnover
+            out.append(TrackedPerson(track_id=5, x1=180.0, y1=0, x2=200.0, y2=20, conf=0.9))
+        return out
+
+    for f in range(6):
+        persons = _persons(f)
+        store.add_frame(f, persons)
+        centers = np.array([p.center for p in persons], dtype=float).reshape(-1, 2)
+        signals.append(FrameSignals(
+            frame_index=f, count=len(persons),
+            grid_counts=np.array([[1, 1], [1, 1]]), centers=centers,
+            flow_mean=1.0, flow_std=0.5, flow_dir_inconsistency=0.3,
+        ))
+
+    feats = extract_window_features(signals, store, schema=schema,
+                                    frame_shape=FRAME_SHAPE)
+    assert feats["nn_distance_mean"] > 0      # 4+ spread-out centers per frame
+    assert feats["nn_distance_std"] > 0       # distances change as tracks move
+    assert feats["abrupt_stop_fraction"] > 0  # track 3 decelerates hard
+    assert feats["direction_reversal_rate"] > 0  # track 4 flips direction
+    assert feats["fast_mover_fraction"] > 0   # track 2 is >3x median speed
+    assert feats["speed_p90"] > 1.5           # pooled p90 well above median
+    assert feats["track_turnover_rate"] > 0   # track 5 born mid-window
