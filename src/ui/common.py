@@ -53,6 +53,30 @@ def model_status_badge(model_path: Path | None) -> tuple[str, str]:
     return "model: not trained", "⚠️"
 
 
+def interpret_prediction(label: int, score: float) -> tuple[str, str]:
+    """(headline, note) plain-language interpretation of one prediction.
+
+    Pure so tests need no st runtime. Scores are P(anomaly) from a modest
+    sequence-held-out model — wording stays appropriately hedged.
+    """
+    pct = f"{score * 100:.0f}%"
+    if label == 1 and score >= 0.8:
+        return "Anomaly likely", f"model confidence {pct}"
+    if label == 1:
+        return "Possible anomaly", f"low model confidence ({pct}) — treat as a hint"
+    if score >= 0.3:
+        return "Probably normal", f"score {pct} is near the decision boundary"
+    return "Normal", f"model confidence {100 - score * 100:.0f}%"
+
+
+def model_caveat() -> str:
+    """One-line honesty caveat shown under every predictions block."""
+    return (
+        "Models are trained with sequence-held-out splits and are modest — "
+        "see Methodology. Detector counts are estimates, never ground truth."
+    )
+
+
 def limitations() -> list[str]:
     """Real, current project limitations — shown on Methodology + Overview."""
     return [

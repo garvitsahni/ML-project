@@ -36,7 +36,7 @@ def _run_capture(device: int, stride: int, cap_seconds: int) -> None:
     from src.preprocessing.camera import Camera, CameraUnavailableError
     from src.tracking.tracker import CrowdTracker
     from src.tracking.trajectories import TrajectoryStore
-    from src.ui.common import find_model_path
+    from src.ui.common import find_model_path, interpret_prediction, model_caveat
     from src.inference.service import InferenceError, InferenceService
 
     window = 30
@@ -101,6 +101,8 @@ def _run_capture(device: int, stride: int, cap_seconds: int) -> None:
                 if svc:
                     res = svc.predict_row(feats)
                     cols[3].metric("anomaly score", round(res.score, 3))
+                    headline, note = interpret_prediction(res.label, res.score)
+                    st.caption(f"{headline} — {note}. {model_caveat()}")
             status.info(f"frames: {len(signals)} · stride {stride} · ends in "
                         f"{max(0, int(deadline - time.time()))}s")
         else:

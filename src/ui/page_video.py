@@ -13,7 +13,7 @@ from src.features.pipeline import WindowConfig, _centers_to_grid, _maybe_resize
 from src.features.schema import FeatureSchema
 from src.inference.service import InferenceError, InferenceService
 from src.preprocessing.video import InvalidVideoError, iter_video_frames
-from src.ui.common import find_model_path
+from src.ui.common import find_model_path, interpret_prediction, model_caveat
 
 VIDEO_TYPES = ["mp4", "avi", "mov", "mkv"]
 
@@ -151,15 +151,19 @@ def render() -> None:
         try:
             svc = InferenceService(mp)
             preds = [svc.predict_row(r) for r in df.to_dict("records")]
+            interp = [interpret_prediction(p.label, p.score) for p in preds]
             out = pd.DataFrame({
                 "window": [f"{a}:{b}" for a, b in zip(df.window_start, df.window_end)],
+                "what it means": [h for h, _ in interp],
                 "label (pred)": [p.label for p in preds],
                 "anomaly score": [round(p.score, 3) for p in preds],
+                "note": [n for _, n in interp],
             })
             st.subheader("Model predictions (schema-strict)")
             st.caption(f"model: {svc.bundle.algorithm} · trained {svc.bundle.trained_at}")
             st.dataframe(out, use_container_width=True)
             st.line_chart(out.set_index("window")["anomaly score"])
+            st.caption(model_caveat())
         except (InferenceError, ValueError) as exc:
             st.warning(f"Model not usable on this data: {exc}")
 

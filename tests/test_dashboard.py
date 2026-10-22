@@ -96,6 +96,33 @@ def test_photo_page_decodes_upload_and_analyzes_in_memory():
     assert image.shape[:2] == (64, 96)
 
 
+# ------------------------------------------- prediction interpretation (UX)
+def test_interpret_prediction_branches():
+    cases = [
+        (1, 0.9, "Anomaly likely"),
+        (1, 0.6, "Possible anomaly"),
+        (0, 0.45, "Probably normal"),
+        (0, 0.1, "Normal"),
+    ]
+    for label, score, expected_headline in cases:
+        headline, note = common.interpret_prediction(label, score)
+        assert headline == expected_headline
+        assert note  # always carries an explanation
+
+
+def test_interpret_prediction_boundaries():
+    assert common.interpret_prediction(1, 0.8)[0] == "Anomaly likely"      # >= 0.8
+    assert common.interpret_prediction(1, 0.79)[0] == "Possible anomaly"
+    assert common.interpret_prediction(0, 0.3)[0] == "Probably normal"     # >= 0.3
+    assert common.interpret_prediction(0, 0.29)[0] == "Normal"
+
+
+def test_model_caveat_mentions_methodology_and_estimates():
+    text = common.model_caveat()
+    assert "Methodology" in text
+    assert "estimate" in text.lower()
+
+
 def test_streamlit_headless_smoke(project_root):
     """App must start headless with no traceback within ~8s."""
     port = 8599

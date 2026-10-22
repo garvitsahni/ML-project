@@ -27,12 +27,20 @@ PAGES = {
     "Research Results": page_results,
 }
 
+NAV_GROUPS = [
+    ("Learn", ["Overview", "Methodology", "Dataset Explorer"]),
+    ("Analyze", ["Photo Analysis", "Video Analysis", "Live Camera"]),
+    ("Train & Review", ["Training & Evaluation", "Research Results"]),
+]
+
 
 def main() -> None:
     st.set_page_config(page_title="CrowdSense AI", page_icon="🧍", layout="wide")
     with st.sidebar:
         st.title("CrowdSense AI")
         choice = st.radio("Navigate", list(PAGES.keys()), label_visibility="collapsed")
+        for group, pages in NAV_GROUPS:
+            st.caption(f"{group}: " + " · ".join(p.split(" ")[0] for p in pages))
         text, emoji = model_status_badge(find_model_path())
         st.caption(f"{emoji} {text}")
         st.caption(
