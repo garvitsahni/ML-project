@@ -70,7 +70,7 @@ class PersonDetector:
     def __init__(
         self,
         model_path: Path | str | None = None,
-        conf: float = 0.25,
+        conf: float = 0.05,  # calibrated 2026-10-22 (configs/experiments.yaml)
         device: str = "cpu",
         imgsz: int = 640,
     ):

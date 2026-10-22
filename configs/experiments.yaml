@@ -8,8 +8,12 @@ split:
 
 detection:
   model: yolov8n.pt
-  conf: 0.25
-  imgsz: 640            # YOLO inference size; updated by scripts/calibrate_detection.py
+  # calibrated 2026-10-22 (scripts/calibrate_detection.py, 40 train frames):
+  # conf=0.05/imgsz=640 gave the highest mean detections/frame (16.40 vs 10.25
+  # at conf=0.25) within the 2h rebuild budget. Detector estimates only —
+  # no counting ground truth exists. Overlays: reports/detection_calibration/.
+  conf: 0.05
+  imgsz: 640
   iou: 0.45
   person_class_id: 0
   device: cpu
