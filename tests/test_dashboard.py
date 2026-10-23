@@ -96,6 +96,45 @@ def test_photo_page_decodes_upload_and_analyzes_in_memory():
     assert image.shape[:2] == (64, 96)
 
 
+def test_validate_upload_accepts_valid_files():
+    from src.ui import page_photo
+
+    assert page_photo.validate_upload("crowd.jpg", 1024, "image/jpeg") is None
+    assert page_photo.validate_upload("a.PNG", 1024, None) is None
+    assert page_photo.validate_upload("scan.tif", 5_000_000, "image/tiff") is None
+
+
+def test_validate_upload_rejects_wrong_extension():
+    from src.ui import page_photo
+
+    err = page_photo.validate_upload("movie.mp4", 1024, "video/mp4")
+    assert err is not None
+    assert "mp4" in err
+
+
+def test_validate_upload_rejects_oversized_file():
+    from src.ui import page_photo
+
+    err = page_photo.validate_upload("big.jpg", 21 * 1024 * 1024, "image/jpeg")
+    assert err is not None
+    assert "20 MB" in err
+
+
+def test_validate_upload_rejects_empty_and_missing_file():
+    from src.ui import page_photo
+
+    assert page_photo.validate_upload("x.jpg", 0, "image/jpeg") is not None
+    assert page_photo.validate_upload(None, 100, None) is not None
+
+
+def test_validate_upload_rejects_non_image_content_type():
+    from src.ui import page_photo
+
+    err = page_photo.validate_upload("x.jpg", 100, "text/plain")
+    assert err is not None
+    assert "image" in err
+
+
 def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):
     import os
 
