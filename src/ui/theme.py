@@ -141,6 +141,12 @@ _RULES = """
 [data-testid="dataframe"] { border-radius: var(--radius-sm); }
 [data-testid="stDataFrame"] { border-radius: var(--radius-sm); }
 
+/* ---------- content width cap (readability on wide screens) ---------- */
+[data-testid="stMainBlockContainer"] {
+  max-width: var(--max-content);
+  margin-inline: auto;
+}
+
 /* ---------- focus visibility ---------- */
 :focus-visible {
   outline: 2px solid var(--accent);

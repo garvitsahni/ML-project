@@ -34,6 +34,15 @@ def test_inject_theme_is_callable():
     assert callable(theme.inject_theme)
 
 
+def test_css_has_focus_and_width_cap():
+    """Task 10 a11y pass: focus outline + capped content width."""
+    from src.ui import theme
+
+    assert ":focus-visible" in theme.CSS
+    assert "outline: 2px solid var(--accent)" in theme.CSS
+    assert "max-width: var(--max-content)" in theme.CSS
+
+
 def test_pill_contains_label_and_kind_class():
     from src.ui import components
 

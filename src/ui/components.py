@@ -149,7 +149,7 @@ def error_state(message: str, detail: str | None = None,
 
 def kv_table(pairs: Sequence[tuple[str, object]]) -> None:
     """Render (label, value) pairs as a compact label/value table."""
-    st.dataframe(kv_rows(pairs), hide_index=True, use_container_width=True,
+    st.dataframe(kv_rows(pairs), hide_index=True, width="stretch",
                  column_config={"0": "Property", "1": "Value"})
 
 

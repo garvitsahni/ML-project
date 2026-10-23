@@ -168,11 +168,18 @@ def _render_bundle_cards(entries: list[dict]) -> None:
                     "replace it.")
                 continue
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Algorithm", entry["algorithm"])
-            m2.metric("Trained at", entry["trained_at"] or "unknown")
-            m3.metric("Training windows", f"{entry['n_train']:,}")
+            m1.metric("Algorithm", entry["algorithm"],
+                      help="Classifier trained on the 15-feature window "
+                           "rows.")
+            m2.metric("Trained at", entry["trained_at"] or "unknown",
+                      help="UTC timestamp recorded inside the bundle "
+                           "artifact.")
+            m3.metric("Training windows", f"{entry['n_train']:,}",
+                      help="Number of 30-frame training windows used to "
+                           "fit this bundle.")
             m4.metric("Artifact",
-                      format_bytes(entry["size_bytes"]))
+                      format_bytes(entry["size_bytes"]),
+                      help="On-disk size of the .joblib file.")
             st.caption(
                 "modified "
                 f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(entry['mtime']))}"
