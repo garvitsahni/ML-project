@@ -11,8 +11,8 @@ import pytest
 from src.ui import common
 
 PAGES = [
-    "page_overview", "page_methodology", "page_datasets", "page_photo",
-    "page_video", "page_camera", "page_training", "page_results",
+    "page_overview", "page_datasets", "page_photo", "page_video",
+    "page_camera", "page_research", "page_results",
 ]
 
 
@@ -263,6 +263,116 @@ def test_probe_devices_uses_injected_opener_and_caches():
         2, opener=lambda i: FakeCap(availability[i]), store=store)
     assert devices == [0, 2]
     assert store["camera_devices"] == [0, 2]
+
+
+def test_load_experiment_results_returns_only_existing_files(tmp_path):
+    from src.ui import page_research
+
+    assert page_research.load_experiment_results(tmp_path) == {}
+    (tmp_path / "evaluation.json").write_text(
+        '{"n_test_windows": 10, "bundles": {}}', encoding="utf-8")
+    out = page_research.load_experiment_results(tmp_path)
+    assert set(out) == {"evaluation"}
+    assert out["evaluation"]["n_test_windows"] == 10
+    # corrupt file: reported, never fabricated
+    (tmp_path / "experiment_ablation.json").write_text("{bad", encoding="utf-8")
+    out = page_research.load_experiment_results(tmp_path)
+    assert "ablation" not in out
+    assert out["errors"] and "experiment_ablation.json" in out["errors"][0]
+
+
+def test_build_findings_empty_without_data():
+    from src.ui import page_research
+
+    assert page_research.build_findings({}) == []
+    assert page_research.build_findings(
+        {"algorithms": {"per_algorithm": {}}}) == []
+    assert page_research.build_findings(
+        {"ablation": {"per_condition": {}}}) == []
+
+
+def test_build_findings_best_algorithm_from_real_auc():
+    from src.ui import page_research
+
+    results = {"algorithms": {"per_algorithm": {
+        "logreg": {"test": {"roc_auc": 0.62}},
+        "xgb": {"test": {"roc_auc": 0.71}},
+        "svm": {"test": {"accuracy": 0.9}},  # no AUC -> ignored
+    }}}
+    findings = page_research.build_findings(results)
+    assert len(findings) == 1
+    assert "xgb" in findings[0] and "0.710" in findings[0]
+
+
+def test_build_findings_ablation_delta_from_present_numbers_only():
+    from src.ui import page_research
+
+    results = {"ablation": {"per_condition": {
+        "A_static_only": {"xgb": {"test": {"roc_auc": 0.60}},
+                          "rf": {"test": {"roc_auc": 0.55}}},
+        "C_static_plus_movement": {"xgb": {"test": {"roc_auc": 0.70}},
+                                   "rf": {"test": {"roc_auc": 0.50}}},
+    }}}
+    findings = page_research.build_findings(results)
+    assert len(findings) == 1
+    assert "0.025" in findings[0]      # mean of +0.10 and -0.05
+    assert "+0.100" in findings[0]     # largest per-algorithm delta
+    # A present but C empty -> no delta claim, no crash
+    assert page_research.build_findings({"ablation": {"per_condition": {
+        "A_static_only": {"xgb": {"test": {"roc_auc": 0.6}}},
+        "C_static_plus_movement": {}}}}) == []
+
+
+def test_experiment_table_shape():
+    from src.ui import page_research
+
+    empty = page_research.experiment_table({})
+    assert len(empty) == 0
+    assert {"experiment", "condition", "algorithm", "split",
+            "roc_auc", "f1"} <= set(empty.columns)
+    results = {
+        "algorithms": {"per_algorithm": {
+            "xgb": {"test": {"roc_auc": 0.6}, "val": {"roc_auc": 0.9}}}},
+        "ablation": {"per_condition": {
+            "A_static_only": {"xgb": {"test": {"roc_auc": 0.5}}}}},
+        "evaluation": {"bundles": {"xgb": {"test_metrics": {"roc_auc": 0.6}}}},
+    }
+    df = page_research.experiment_table(results)
+    assert len(df) == 4  # 2 (D: val+test) + 1 (ablation test) + 1 (evaluation)
+    assert set(df["experiment"]) == {"D_algorithms", "ablation", "evaluation"}
+
+
+def test_load_experiment_config_and_window_meta(tmp_path):
+    from src.ui import page_research
+
+    assert page_research.load_experiment_config(tmp_path / "missing.yaml") == {}
+    cfg_file = tmp_path / "experiments.yaml"
+    cfg_file.write_text("seed: 7\nfeatures:\n  window_frames: 30\n",
+                        encoding="utf-8")
+    cfg = page_research.load_experiment_config(cfg_file)
+    assert cfg["seed"] == 7
+    assert cfg["features"]["window_frames"] == 30
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("{{{", encoding="utf-8")
+    assert page_research.load_experiment_config(bad) == {}
+
+    assert page_research.load_window_meta(tmp_path / "missing.json") == {}
+    meta_file = tmp_path / "ucsd_windows.meta.json"
+    meta_file.write_text('{"rows": 100, "sequences": 5}', encoding="utf-8")
+    assert page_research.load_window_meta(meta_file)["rows"] == 100
+    bad_json = tmp_path / "bad.json"
+    bad_json.write_text("{nope", encoding="utf-8")
+    assert page_research.load_window_meta(bad_json) == {}
+
+
+def test_log_tail_returns_last_lines(tmp_path):
+    from src.ui import page_research
+
+    log = tmp_path / "run.log"
+    assert page_research._log_tail(log) == []  # missing file -> no crash
+    log.write_text("\n".join(f"line {i}" for i in range(50)), encoding="utf-8")
+    tail = page_research._log_tail(log, n=30)
+    assert tail[-1] == "line 49" and len(tail) == 30
 
 
 def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):
