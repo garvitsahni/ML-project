@@ -88,3 +88,12 @@ def test_analyzer_respects_max_dim():
     out = an.add_frame(_frame(0, h=96, w=128))
     assert max(out["shape"]) == 48
     assert out["shape"][0] < out["shape"][1]  # aspect preserved
+
+
+def test_analyzer_returns_grid_counts():
+    an = FrameAnalyzer(window=2, window_stride=1, grid_size=2, max_dim=None,
+                       detector=FakeDetector())
+    outs = [an.add_frame(_frame(i)) for i in range(3)]
+    grid = outs[-1]["grid_counts"]
+    assert grid.shape == (2, 2)
+    assert int(grid.sum()) >= 1  # tracker confirmed the person by frame 2

@@ -156,6 +156,115 @@ def test_fmt_size_units():
     assert page_video._fmt_size(1024 * 1024) == "1.0 MB"
 
 
+class _FakeCameraCap:
+    """Minimal capture double: yields n synthetic frames, then EOF."""
+
+    def __init__(self, n: int):
+        self._n = n
+        self._i = 0
+        self.released = False
+
+    def read(self):
+        if self._i >= self._n:
+            return False, None
+        import numpy as np
+
+        frame = np.random.RandomState(self._i).randint(
+            0, 255, (48, 64, 3), dtype=np.uint8)
+        self._i += 1
+        return True, frame
+
+    def release(self):
+        self.released = True
+
+
+class _FakeDetector:
+    def detect(self, frame):
+        from src.detection.detector import Detection, DetectionResult
+
+        h, w = frame.shape[:2]
+        return DetectionResult(
+            detections=(Detection(x1=10, y1=10, x2=30, y2=40,
+                                  conf=0.9, cls_id=0),),
+            inference_time_s=0.0, model_name="fake", image_shape=(h, w))
+
+
+def _camera_store(n_frames: int, stride: int = 1):
+    from src.ui.analysis_loop import FrameAnalyzer
+    from src.ui import page_camera
+
+    return {
+        "camera_cap": _FakeCameraCap(n_frames),
+        "camera_analyzer": FrameAnalyzer(
+            window=4, window_stride=2, max_dim=None, detector=_FakeDetector()),
+        "camera_cfg": {"stride": stride, "max_dim": None},
+    }
+
+
+def test_step_capture_processes_injected_fake_cap():
+    from src.ui import page_camera
+
+    store = _camera_store(8)
+    out = page_camera.step_capture(5, store=store)
+    assert out["read"] == 5 and out["processed"] == 5
+    assert out["stream_ended"] is False
+    assert out["last"]["frame_index"] == 4
+    assert out["fps"] > 0 and out["latency_ms"] >= 0
+    assert out["frame"].shape == (48, 64, 3)
+
+    # continues where the previous batch stopped; EOF after 8 frames
+    out2 = page_camera.step_capture(4, store=store)
+    assert out2["read"] == 4 and out2["processed"] == 3
+    assert out2["stream_ended"] is True
+    assert out2["last"]["frame_index"] == 7
+    assert out2["window"] is not None
+    assert out2["window"]["window_start"] == 4  # rolling: last 4 of 8 frames
+
+
+def test_step_capture_honors_stride():
+    from src.ui import page_camera
+
+    store = _camera_store(10, stride=2)
+    out = page_camera.step_capture(10, store=store)
+    assert out["read"] == 10
+    assert out["processed"] == 5  # frames 0, 2, 4, 6, 8
+
+
+def test_overlay_grid_draws_cells_on_copy():
+    import numpy as np
+
+    from src.ui import page_camera
+
+    frame = np.zeros((40, 60, 3), dtype=np.uint8)
+    grid = np.array([[0, 5], [1, 0]])
+    out = page_camera._overlay_grid(frame, grid)
+    assert out.shape == frame.shape
+    assert out.max() > 0                      # tinted cells changed pixels
+    assert out[:20, :30].max() == 0           # zero-count cell untouched
+    assert np.array_equal(frame, np.zeros_like(frame))  # original intact
+
+
+def test_probe_devices_uses_injected_opener_and_caches():
+    from src.ui import page_camera
+
+    class FakeCap:
+        def __init__(self, ok):
+            self._ok = ok
+
+        def isOpened(self):
+            return self._ok
+
+        def release(self):
+            pass
+
+    availability = {0: True, 1: False, 2: True}
+    store: dict = {}
+    devices = page_camera._probe_devices(
+        2, opener=lambda i: FakeCap(availability[i]), store=store)
+    assert devices == [0, 2]
+    assert store["camera_devices"] == [0, 2]
+
+
 def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):
     import os
 

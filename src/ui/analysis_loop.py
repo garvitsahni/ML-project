@@ -121,6 +121,7 @@ class FrameAnalyzer:
             "flow_mean": flow_mean,
             "flow_std": flow_std,
             "shape": (h, w),
+            "grid_counts": self._signals[-1].grid_counts,
             "window": window_row,
         }
 
