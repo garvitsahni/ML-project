@@ -12,7 +12,7 @@ from src.ui import common
 
 PAGES = [
     "page_overview", "page_datasets", "page_photo", "page_video",
-    "page_camera", "page_research", "page_results",
+    "page_camera", "page_research", "page_models", "page_results",
 ]
 
 
@@ -25,6 +25,14 @@ def test_app_module_imports():
 def test_page_module_imports_with_render(name):
     mod = importlib.import_module(f"src.ui.{name}")
     assert callable(getattr(mod, "render"))
+
+
+def test_format_bytes_units():
+    from src.ui import common
+
+    assert common.format_bytes(512) == "512 B"
+    assert common.format_bytes(25 * 1024) == "25 KB"
+    assert common.format_bytes(3 * 1024 * 1024) == "3.0 MB"
 
 
 def test_require_file_returns_path(tmp_path):
@@ -373,6 +381,161 @@ def test_log_tail_returns_last_lines(tmp_path):
     log.write_text("\n".join(f"line {i}" for i in range(50)), encoding="utf-8")
     tail = page_research._log_tail(log, n=30)
     assert tail[-1] == "line 49" and len(tail) == 30
+
+
+def _fake_sequences():
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    return [
+        SimpleNamespace(sequence_id="ped1_Train001", part="ped1", split="train",
+                        n_frames=100,
+                        frame_labels=np.array([0] * 95 + [1] * 5),
+                        has_masks=False),
+        SimpleNamespace(sequence_id="ped1_Test001", part="ped1", split="test",
+                        n_frames=80,
+                        frame_labels=np.array([0] * 60 + [1] * 20),
+                        has_masks=True),
+        SimpleNamespace(sequence_id="ped2_Test001", part="ped2", split="test",
+                        n_frames=40, frame_labels=None, has_masks=False),
+    ]
+
+
+def test_dataset_summary_counts_from_fake_adapter():
+    from src.ui import page_datasets
+
+    seqs = _fake_sequences()
+
+    class FakeAdapter:
+        def iter_sequences(self):
+            return iter(seqs)
+
+    summary = page_datasets.dataset_summary(FakeAdapter())
+    assert summary["sequences"] == 3
+    assert summary["frames"] == 220
+    assert summary["anomalous_frames"] == 25      # None labels -> 0 frames
+    assert summary["by_split"] == {"train": 1, "test": 2}
+    assert summary["by_part"] == {"ped1": 2, "ped2": 1}
+    assert summary["frames_by_split"] == {"train": 100, "test": 120}
+    assert summary["with_masks"] == 1
+    rows = summary["rows"]
+    assert len(rows) == 3
+    first = rows[0]
+    assert first["sequence_id"] == "ped1_Train001"
+    assert first["n_frames"] == 100
+    assert first["anomalous"] == 5
+    assert abs(first["anomaly_rate"] - 0.05) < 1e-9
+    assert first["has_masks"] is False
+
+
+def test_dataset_summary_empty_adapter():
+    from src.ui import page_datasets
+
+    class EmptyAdapter:
+        def iter_sequences(self):
+            return iter([])
+
+    summary = page_datasets.dataset_summary(EmptyAdapter())
+    assert summary["sequences"] == 0
+    assert summary["frames"] == 0
+    assert summary["anomalous_frames"] == 0
+    assert summary["rows"] == []
+
+
+def test_dataset_fingerprint_absent_and_present(tmp_path):
+    from src.ui import page_datasets
+
+    assert page_datasets._dataset_fingerprint(tmp_path / "nope") == "absent"
+    fp = page_datasets._dataset_fingerprint(tmp_path)
+    assert fp != "absent" and all(c in "0123456789abcdef" for c in fp)
+
+
+def test_list_bundles_reads_and_tolerates_missing_fields(tmp_path):
+    import joblib
+
+    from src.models.bundle import ModelBundle, save_bundle
+    from src.ui import page_models
+
+    save_bundle(ModelBundle(
+        model={"fake": True}, feature_names=["a", "b"], algorithm="logreg",
+        trained_at="2026-01-02T03:04:05Z", n_train=42,
+        metrics={"val": {"f1": 0.5}}), tmp_path / "logreg.joblib")
+    # bundle missing optional fields: loads, tolerates (no fabricated values)
+    joblib.dump({"version": "1", "model": {}, "feature_names": ["a"],
+                 "algorithm": "dt"}, tmp_path / "dt.joblib")
+    (tmp_path / "broken.joblib").write_bytes(b"not a joblib at all")
+
+    entries = page_models.list_bundles(tmp_path)
+    by_name = {e["name"]: e for e in entries}
+    assert set(by_name) == {"logreg", "dt", "broken"}
+
+    logreg = by_name["logreg"]
+    assert logreg["available"] is True
+    assert logreg["error"] is None
+    assert logreg["algorithm"] == "logreg"
+    assert logreg["trained_at"] == "2026-01-02T03:04:05Z"
+    assert logreg["n_train"] == 42
+    assert logreg["metrics"] == {"val": {"f1": 0.5}}
+    assert logreg["feature_names"] == ["a", "b"]
+    assert logreg["size_bytes"] > 0
+    assert logreg["mtime"] > 0
+
+    dt = by_name["dt"]
+    assert dt["available"] is True
+    assert dt["algorithm"] == "dt"
+    assert dt["trained_at"] is None        # empty -> None, never invented
+    assert dt["n_train"] == 0
+    assert dt["metrics"] == {}
+
+    broken = by_name["broken"]
+    assert broken["available"] is False
+    assert broken["error"]                 # reason preserved, no traceback
+    assert broken["algorithm"] is None
+
+
+def test_metrics_for_maps_evaluation_json():
+    from src.ui import page_models
+
+    evaluation = {"bundles": {"xgb": {"test_metrics": {"roc_auc": 0.9},
+                                      "trained_at": "t", "n_train": 5}}}
+    assert page_models.metrics_for("xgb", evaluation) == {"roc_auc": 0.9}
+    assert page_models.metrics_for("dt", evaluation) is None
+    assert page_models.metrics_for("xgb", {}) is None
+    assert page_models.metrics_for("xgb", {"bundles": {}}) is None
+    assert page_models.metrics_for("xgb", {"bundles": {"xgb": {}}}) is None
+
+
+def test_resolve_selected_model_validates_and_falls_back():
+    from src.ui import page_models
+
+    entries = [
+        {"name": "xgb", "available": True, "mtime": 3.0},
+        {"name": "dt", "available": True, "mtime": 1.0},
+        {"name": "broken", "available": False, "mtime": 9.0},
+    ]
+    # nothing selected -> newest available, no warning
+    name, warning = page_models.resolve_selected_model(entries, store={})
+    assert name == "xgb" and warning is None
+    # valid selection is kept
+    name, warning = page_models.resolve_selected_model(
+        entries, store={"settings": {"selected_model": "dt"}})
+    assert name == "dt" and warning is None
+    # unavailable selection -> fallback + warning naming both
+    name, warning = page_models.resolve_selected_model(
+        entries, store={"settings": {"selected_model": "broken"}})
+    assert name == "xgb" and "broken" in warning and "xgb" in warning
+    # unknown selection -> fallback + warning
+    name, warning = page_models.resolve_selected_model(
+        entries, store={"settings": {"selected_model": "ghost"}})
+    assert name == "xgb" and "ghost" in warning
+    # no available bundles at all -> None + warning when one was selected
+    name, warning = page_models.resolve_selected_model(
+        [{"name": "broken", "available": False, "mtime": 1.0}],
+        store={"settings": {"selected_model": "broken"}})
+    assert name is None and warning is not None
+    name, warning = page_models.resolve_selected_model([], store={})
+    assert name is None and warning is None
 
 
 def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):

@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.ui import (page_camera, page_datasets, page_overview, page_photo,
-                    page_research, page_results, page_video)
+from src.ui import (page_camera, page_datasets, page_models, page_overview,
+                    page_photo, page_research, page_results, page_video)
 
 OVERVIEW = st.Page(page_overview.render, title="Overview", icon=":material/home:",
                    url_path="overview", default=True)
@@ -28,10 +28,12 @@ DATASETS = st.Page(page_datasets.render, title="Dataset Explorer",
                    icon=":material/storage:", url_path="datasets")
 RESEARCH = st.Page(page_research.render, title="Research Lab",
                    icon=":material/science:", url_path="research")
+MODELS = st.Page(page_models.render, title="Model Registry",
+                 icon=":material/model_training:", url_path="models")
 RESULTS = st.Page(page_results.render, title="Research Results",
                   icon=":material/assessment:", url_path="results")
 
 GROUPS: dict[str, list] = {
     "Workspace": [OVERVIEW, PHOTO, VIDEO, CAMERA],
-    "Research": [DATASETS, RESEARCH, RESULTS],
+    "Research": [DATASETS, RESEARCH, MODELS, RESULTS],
 }

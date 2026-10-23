@@ -22,6 +22,16 @@ def require_file(path: Path | str, hint: str = "") -> Path:
     return path
 
 
+def format_bytes(n: int | float) -> str:
+    """Human-readable size: B below 1 KB, whole KB below 1 MB, 1-decimal MB."""
+    n = int(n)
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.0f} KB"
+    return f"{n / (1024 * 1024):.1f} MB"
+
+
 def list_result_files(directory: Path | str, suffix: str = ".json") -> list[Path]:
     directory = Path(directory)
     if not directory.is_dir():
