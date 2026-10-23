@@ -25,7 +25,8 @@ from src.ui import state
 from src.ui import video_store
 from src.ui.analysis_loop import FrameAnalyzer, draw_persons
 from src.ui.charts import timeline_series
-from src.ui.common import find_model_path, load_model_algorithm
+from src.ui.common import (configured_detector, find_model_path,
+                           load_model_algorithm)
 
 VIDEO_TYPES = ["mp4", "avi", "mov", "mkv"]
 _MAX_VIDEO_MB = 200
@@ -173,6 +174,7 @@ def _start_processing(meta: dict, *, stride: int, max_frames: int,
     store["video_analyzer"] = FrameAnalyzer(
         grid_size=WindowConfig().grid_size, max_dim=max_dim,
         window=_WINDOW, window_stride=_WINDOW_STRIDE,
+        detector=configured_detector(),
     )
     export_target = (meta["path"].parent
                      / f"annotated_{meta['hash'][:12]}.mp4")

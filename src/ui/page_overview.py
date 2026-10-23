@@ -91,9 +91,9 @@ def _render_evaluation_status() -> None:
     st.write(f"**{evaluation.get('n_test_windows', 0)} held-out test windows**")
     st.caption(f"{len(evaluation.get('test_sequences', []))} test sequences "
                "(grouped split — no sequence spans train/test)")
-    if st.button("Open Research Results", key="eval_open_results"):
+    if st.button("Open Reports", key="eval_open_results"):
         from src.ui import nav
-        _goto(nav.RESULTS)
+        _goto(nav.REPORTS)
 
 
 def _render_available_models() -> None:
@@ -130,9 +130,9 @@ def _render_research_outputs() -> None:
         return
     ui.status_pill(f"{len(result_files)} result files · {fig_count} figures", "ok")
     st.write(" · ".join(f"`{p.name}`" for p in result_files) or "—")
-    if st.button("Open Research Results", key="outputs_open_results"):
+    if st.button("Open Reports", key="outputs_open_results"):
         from src.ui import nav
-        _goto(nav.RESULTS)
+        _goto(nav.REPORTS)
 
 
 def _render_recent_activity() -> None:
@@ -152,7 +152,7 @@ def _render_recent_activity() -> None:
                  "the app server restarts.")
     if st.button("Open Reports", key="activity_open_reports"):
         from src.ui import nav
-        _goto(nav.RESULTS)
+        _goto(nav.REPORTS)
 
 
 def render() -> None:

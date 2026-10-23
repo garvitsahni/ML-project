@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, MutableMapping
 
 from src.config import load_paths
 
@@ -30,6 +31,19 @@ def format_bytes(n: int | float) -> str:
     if n < 1024 * 1024:
         return f"{n / 1024:.0f} KB"
     return f"{n / (1024 * 1024):.1f} MB"
+
+
+def configured_detector(store: MutableMapping[str, Any] | None = None):
+    """PersonDetector bound to the session's detection-confidence setting.
+
+    Shared by the Photo, Video and Camera workspaces so the confidence
+    threshold lives in exactly one place (settings).
+    """
+    from src.detection.detector import PersonDetector
+    from src.ui import state
+
+    conf = float(state.settings(store).get("conf_threshold", 0.25))
+    return PersonDetector(conf=conf)
 
 
 def list_result_files(directory: Path | str, suffix: str = ".json") -> list[Path]:

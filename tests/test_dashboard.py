@@ -12,7 +12,8 @@ from src.ui import common
 
 PAGES = [
     "page_overview", "page_datasets", "page_photo", "page_video",
-    "page_camera", "page_research", "page_models", "page_results",
+    "page_camera", "page_research", "page_models", "page_reports",
+    "page_settings",
 ]
 
 
@@ -536,6 +537,90 @@ def test_resolve_selected_model_validates_and_falls_back():
     assert name is None and warning is not None
     name, warning = page_models.resolve_selected_model([], store={})
     assert name is None and warning is None
+
+
+def test_history_frame_flattens_entries():
+    from src.ui import page_reports
+
+    entries = [
+        {"ts": "2026-10-23T10:00:00", "kind": "photo", "persons": 5,
+         "model": "yolov8n.pt", "seconds": 0.8},
+        {"ts": "2026-10-23T10:01:00", "kind": "video", "video": "clip.mp4",
+         "frames": 40, "windows": 3, "seconds": 12.3, "model": "xgb"},
+        {"ts": "2026-10-23T10:02:00", "kind": "camera", "device": 0,
+         "frames": 15, "seconds": 4.4, "model": "xgb"},
+    ]
+    frame = page_reports.history_frame(entries)
+    assert list(frame.columns) == ["time", "input", "kind", "model",
+                                   "results", "duration"]
+    assert len(frame) == 3
+    photo, video, camera = frame.iloc[0], frame.iloc[1], frame.iloc[2]
+    assert photo["time"] == "2026-10-23 10:00:00"
+    assert photo["input"] == "uploaded photo"
+    assert photo["kind"] == "Photo"
+    assert photo["results"] == "5 persons"
+    assert photo["duration"] == "0.8 s"
+    assert video["input"] == "clip.mp4"
+    assert video["results"] == "3 windows · 40 frames"
+    assert camera["input"] == "camera 0"
+    assert camera["results"] == "15 frames"
+    # missing fields stay empty markers — never fabricated
+    sparse = page_reports.history_frame([{"ts": "2026-10-23T11:00:00",
+                                          "kind": "photo"}])
+    assert sparse.iloc[0]["results"] == "—"
+    assert sparse.iloc[0]["duration"] == "—"
+    assert sparse.iloc[0]["model"] == "—"
+
+
+def test_export_csv_round_trips():
+    import csv
+    import io
+
+    from src.ui import page_reports
+
+    entries = [
+        {"ts": "2026-10-23T10:00:00", "kind": "photo", "persons": 5,
+         "model": "yolov8n.pt", "seconds": 0.8},
+        {"ts": "2026-10-23T10:01:00", "kind": "video", "video": "a,b.mp4",
+         "frames": 40, "windows": 3, "seconds": 12.3, "model": "xgb"},
+    ]
+    text = page_reports.export_csv(entries)
+    rows = list(csv.DictReader(io.StringIO(text)))
+    assert len(rows) == 2
+    assert rows[0]["input"] == "uploaded photo"
+    assert rows[0]["results"] == "5 persons"
+    assert rows[1]["input"] == "a,b.mp4"   # comma survives quoting
+    # raw summary keys preserved for machine use
+    assert rows[0]["persons"] == "5"
+    assert rows[1]["windows"] == "3"
+
+
+def test_diagnostics_whitelisted_only():
+    from src.ui import page_settings
+
+    diag = page_settings.diagnostics()
+    allowed = {"python", "streamlit", "torch_device", "dataset_present",
+               "model_present", "results_present"}
+    assert set(diag) <= allowed
+    assert diag["python"] and diag["python"][0].isdigit()
+    assert diag["streamlit"]
+    assert isinstance(diag["dataset_present"], bool)
+    assert isinstance(diag["model_present"], bool)
+    assert isinstance(diag["results_present"], bool)
+    for value in diag.values():
+        text = str(value)
+        assert ":\\" not in text            # no absolute paths
+        assert "KMP_DUPLICATE" not in text  # no env values
+
+
+def test_configured_detector_uses_settings_conf():
+    from src.ui import common
+
+    det = common.configured_detector(
+        store={"settings": {"conf_threshold": 0.6}})
+    assert det.conf == 0.6
+    det = common.configured_detector(store={})
+    assert det.conf == 0.25
 
 
 def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):

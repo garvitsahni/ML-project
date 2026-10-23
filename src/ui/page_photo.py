@@ -15,7 +15,8 @@ import streamlit as st
 from src.detection.analyze import analyze_frame
 from src.ui import components as ui
 from src.ui import state
-from src.ui.common import find_model_path, load_model_algorithm
+from src.ui.common import (configured_detector, find_model_path,
+                           load_model_algorithm)
 
 _MAX_SIDE = 1280
 _ALLOWED_EXTS = {"jpg", "jpeg", "png", "tif", "bmp"}
@@ -101,7 +102,8 @@ def _run_analysis(data: bytes, fingerprint: tuple, name: str) -> dict | None:
     with st.spinner("Detecting persons (YOLOv8n, CPU)..."):
         t0 = time.perf_counter()
         try:
-            image, analysis = analyze_upload(data)
+            image, analysis = analyze_upload(data,
+                                             detector=configured_detector())
         except Exception as exc:
             ui.error_state(
                 "Analysis failed",

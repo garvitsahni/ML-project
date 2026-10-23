@@ -20,7 +20,8 @@ from src.ui import components as ui
 from src.ui import state
 from src.ui.analysis_loop import FrameAnalyzer, draw_persons
 from src.ui.charts import timeline_series
-from src.ui.common import find_model_path, load_model_algorithm
+from src.ui.common import (configured_detector, find_model_path,
+                           load_model_algorithm)
 
 _WINDOW = 30           # rolling window length in processed frames
 _WINDOW_STRIDE = 5     # window evaluation step (pipeline default)
@@ -211,7 +212,8 @@ def _start_capture(device: int, stride: int, cap_seconds: int) -> None:
     store["camera_cap"] = cap
     store["camera_running"] = True
     store["camera_analyzer"] = FrameAnalyzer(
-        max_dim=_CAMERA_MAX_DIM, window=_WINDOW, window_stride=_WINDOW_STRIDE)
+        max_dim=_CAMERA_MAX_DIM, window=_WINDOW, window_stride=_WINDOW_STRIDE,
+        detector=configured_detector())
     store["camera_cfg"] = {"stride": stride, "max_dim": _CAMERA_MAX_DIM}
     store["camera_run"] = {
         "phase": "processing", "device": device, "stride": stride,
