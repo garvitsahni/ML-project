@@ -110,10 +110,12 @@ def metric_tile(label: str, value: object, delta: str | None = None,
 
 def empty_state(title: str, message: str | None = None,
                 action_label: str | None = None,
-                on_click: Callable[[], None] | None = None) -> bool:
+                on_click: Callable[[], None] | None = None,
+                key: str | None = None) -> bool:
     """Helpful empty state with an optional primary action.
 
-    Returns True when the action button was pressed.
+    Returns True when the action button was pressed. Pass a unique `key`
+    when a page may render several empty states with the same label.
     """
     msg = f'<p class="state-block__msg">{html.escape(message)}</p>' if message else ""
     st.markdown(
@@ -122,13 +124,14 @@ def empty_state(title: str, message: str | None = None,
         unsafe_allow_html=True,
     )
     if action_label:
-        return st.button(action_label, type="primary", on_click=on_click)
+        return st.button(action_label, type="primary", on_click=on_click, key=key)
     return False
 
 
 def error_state(message: str, detail: str | None = None,
                 retry_label: str | None = None,
-                on_click: Callable[[], None] | None = None) -> bool:
+                on_click: Callable[[], None] | None = None,
+                key: str | None = None) -> bool:
     """Actionable error block with an optional retry button.
 
     Returns True when the retry button was pressed.
@@ -140,7 +143,7 @@ def error_state(message: str, detail: str | None = None,
         unsafe_allow_html=True,
     )
     if retry_label:
-        return st.button(retry_label, on_click=on_click)
+        return st.button(retry_label, on_click=on_click, key=key)
     return False
 
 
@@ -160,6 +163,25 @@ def render_limitations(items: Sequence[str]) -> None:
     """Shared renderer for the honest-limitations list."""
     for item in items:
         st.markdown(f"- {item}")
+
+
+_KIND_LABELS = {"photo": "Photo", "video": "Video", "camera": "Camera",
+                "experiment": "Experiment"}
+
+
+def history_rows(entries: Sequence[dict]) -> list[list[str]]:
+    """Session-history entries -> [when, input, key results] rows."""
+    rows: list[list[str]] = []
+    for entry in entries:
+        ts = str(entry.get("ts", "")).replace("T", " ")[:16]
+        kind = str(entry.get("kind", ""))
+        label = _KIND_LABELS.get(kind, kind.replace("_", " ").title())
+        details = " · ".join(
+            f"{str(k).replace('_', ' ')} {v}"
+            for k, v in entry.items() if k not in ("ts", "kind")
+        )
+        rows.append([ts, label, details or "—"])
+    return rows
 
 
 def download_csv(label: str, data: str | bytes, file_name: str,

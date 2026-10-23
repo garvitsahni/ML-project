@@ -96,6 +96,89 @@ def test_photo_page_decodes_upload_and_analyzes_in_memory():
     assert image.shape[:2] == (64, 96)
 
 
+def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):
+    import os
+
+    old = tmp_path / "old.joblib"
+    new = tmp_path / "new.joblib"
+    old.write_bytes(b"x")
+    new.write_bytes(b"y")
+    os.utime(old, (1, 1))  # epoch -> definitively older
+    (tmp_path / "skip.txt").write_text("z", encoding="utf-8")
+    out = common.list_model_files(tmp_path)
+    assert [p.name for p, _mtime in out] == ["new.joblib", "old.joblib"]
+    assert isinstance(out[0][1], float)
+
+
+def test_list_model_files_missing_dir_returns_empty(tmp_path):
+    assert common.list_model_files(tmp_path / "nope") == []
+
+
+def test_load_evaluation_missing_returns_empty(tmp_path):
+    assert common.load_evaluation(tmp_path) == {}
+
+
+def test_load_evaluation_reads_existing_json(tmp_path):
+    (tmp_path / "evaluation.json").write_text(
+        '{"logreg": {"test": {"roc_auc": 0.675}}}', encoding="utf-8")
+    out = common.load_evaluation(tmp_path)
+    assert out["logreg"]["test"]["roc_auc"] == 0.675
+
+
+def test_load_evaluation_corrupt_file_returns_empty(tmp_path):
+    (tmp_path / "evaluation.json").write_text("{not json", encoding="utf-8")
+    assert common.load_evaluation(tmp_path) == {}
+
+
+def test_dataset_probe_with_fake_adapter_counts():
+    import numpy as np
+
+    class Seq:
+        def __init__(self, n, labels):
+            self.n_frames = n
+            self.frame_labels = labels
+
+    class FakeAdapter:
+        def __init__(self, root=None):
+            pass
+
+        def iter_sequences(self):
+            return iter([Seq(10, np.array([0, 1] * 5)), Seq(5, np.zeros(5, dtype=int))])
+
+    probe = common.dataset_probe(Path("any"), factory=FakeAdapter)
+    assert probe == {"available": True, "sequences": 2, "frames": 15,
+                     "anomalous": 5, "error": None}
+
+
+def test_dataset_probe_missing_reports_unavailable(tmp_path):
+    class Boom:
+        def __init__(self, root=None):
+            raise FileNotFoundError("dataset not found")
+
+    probe = common.dataset_probe(tmp_path / "x", factory=Boom)
+    assert probe["available"] is False
+    assert probe["error"]
+    assert probe["sequences"] is None
+
+
+def test_dataset_probe_accepts_string_root():
+    from pathlib import Path
+
+    seen = {}
+
+    class Fake:
+        def __init__(self, root=None):
+            seen["root"] = root
+
+        def iter_sequences(self):
+            return iter([])
+
+    probe = common.dataset_probe("data/raw/some_root", factory=Fake)
+    assert probe["available"] is True
+    # the adapter expects Path objects: dataset_probe normalizes at its boundary
+    assert isinstance(seen["root"], Path)
+
+
 def test_streamlit_headless_smoke(project_root):
     """App must start headless with no traceback within ~8s."""
     port = 8599

@@ -127,3 +127,25 @@ def test_grouped_bars_returns_chart_with_legend():
     assert isinstance(chart, alt.Chart)
     spec = chart.to_dict()
     assert spec["encoding"].get("color", {}).get("legend") is not None
+
+
+def test_history_rows_formats_entries():
+    from src.ui import components
+
+    entries = [
+        {"ts": "2026-10-23T10:00:00", "kind": "photo", "count": 12},
+        {"ts": "2026-10-23T11:00:00", "kind": "video",
+         "windows": 40, "anomalies": 3},
+    ]
+    rows = components.history_rows(entries)
+    assert rows[0][0] == "2026-10-23 10:00"
+    assert rows[0][1] == "Photo"
+    assert "12" in rows[0][2]
+    assert rows[1][1] == "Video"
+    assert "40" in rows[1][2] and "3" in rows[1][2]
+
+
+def test_history_rows_empty_input():
+    from src.ui import components
+
+    assert components.history_rows([]) == []
