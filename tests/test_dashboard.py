@@ -135,6 +135,27 @@ def test_validate_upload_rejects_non_image_content_type():
     assert "image" in err
 
 
+def test_validate_video_upload_accepts_and_rejects():
+    from src.ui import page_video
+
+    assert page_video.validate_video_upload("clip.mp4", 1024) is None
+    assert page_video.validate_video_upload("clip.mov", 1024) is None
+    err = page_video.validate_video_upload("photo.jpg", 1024)
+    assert err is not None and "mp4" in err
+    err = page_video.validate_video_upload("big.mp4", 201 * 1024 * 1024)
+    assert err is not None and "200 MB" in err
+    assert page_video.validate_video_upload(None, 10) is not None
+    assert page_video.validate_video_upload("empty.mp4", 0) is not None
+
+
+def test_fmt_size_units():
+    from src.ui import page_video
+
+    assert page_video._fmt_size(25 * 1024) == "25 KB"
+    assert page_video._fmt_size(3 * 1024 * 1024) == "3.0 MB"
+    assert page_video._fmt_size(1024 * 1024) == "1.0 MB"
+
+
 def test_list_model_files_sorted_newest_first_and_filtered(tmp_path):
     import os
 

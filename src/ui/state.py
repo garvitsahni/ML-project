@@ -16,6 +16,10 @@ import streamlit as st
 #: only released while a different page is active.
 CAMERA_URL = "camera"
 
+#: `url_path` of the Video Analysis page — same ownership rule for the
+#: video-file handle held during batched processing.
+VIDEO_URL = "video-analysis"
+
 HISTORY_LIMIT = 50
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -167,16 +171,30 @@ def release_camera(store: MutableMapping[str, Any] | None = None) -> None:
     store["camera_running"] = False
 
 
+def release_video(store: MutableMapping[str, Any] | None = None) -> None:
+    """Release the video-file capture (if any) and clear flags. Idempotent."""
+    store = _resolve(store)
+    cap = store.pop("video_cap", None)
+    if cap is not None:
+        try:
+            cap.release()
+        except Exception:
+            pass
+    store["video_running"] = False
+
+
 def cleanup_resources(store: MutableMapping[str, Any] | None = None) -> None:
     """Release resources owned by pages that are no longer active.
 
     The shell calls this after dispatch, having set `active_page` to the
-    page that just ran: a still-open camera capture is released only when
-    a different page is active. Registered cleanup hooks always run.
+    page that just ran: still-open camera/video handles are released only
+    when a different page is active. Registered cleanup hooks always run.
     """
     store = _resolve(store)
     if store.get("camera_cap") is not None and store.get("active_page") != CAMERA_URL:
         release_camera(store)
+    if store.get("video_cap") is not None and store.get("active_page") != VIDEO_URL:
+        release_video(store)
     hook = store.get("_cleanup_hook")
     if callable(hook):
         hook()

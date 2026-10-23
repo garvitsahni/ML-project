@@ -110,6 +110,43 @@ def test_release_camera_releases_cap_and_clears_flags():
     state.release_camera(store)
 
 
+def test_release_video_releases_cap_and_clears_flags():
+    class FakeCap:
+        def __init__(self):
+            self.released = False
+
+        def release(self):
+            self.released = True
+
+    cap = FakeCap()
+    store = {"video_cap": cap, "video_running": True}
+    state.release_video(store)
+    assert cap.released
+    assert "video_cap" not in store
+    assert store["video_running"] is False
+    state.release_video(store)  # idempotent
+
+
+def test_cleanup_resources_releases_video_only_off_the_video_page():
+    class FakeCap:
+        def __init__(self):
+            self.released = False
+
+        def release(self):
+            self.released = True
+
+    away = FakeCap()
+    store = {"video_cap": away, "active_page": "photo-analysis"}
+    state.cleanup_resources(store)
+    assert away.released
+    assert "video_cap" not in store
+
+    on_page = FakeCap()
+    store2 = {"video_cap": on_page, "active_page": state.VIDEO_URL}
+    state.cleanup_resources(store2)
+    assert not on_page.released  # page still owns the video handle
+
+
 def test_cleanup_resources_releases_camera_only_off_the_camera_page():
     class FakeCap:
         def __init__(self):
