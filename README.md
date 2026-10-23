@@ -15,7 +15,7 @@ rounded up, or reported without its provenance.
 # 1. Dependencies (verified environment; requirements.txt lists them)
 python -m pip install -r requirements.txt
 
-# 2. Tests (TDD suite: ~124 tests)
+# 2. Tests (TDD suite: ~201 tests)
 #    Prefer the wrapper — it pins native thread pools to 1 and avoids
 #    intermittent OpenMP access-violation crashes on Windows:
 powershell -ExecutionPolicy Bypass -File scripts\run_tests.ps1
@@ -167,16 +167,84 @@ src/
   experiments/             # metrics + A-D runner (E gated)
   inference/               # schema-strict InferenceService
   visualization/           # Agg-backend PNG plots
-  ui/                      # 8 dashboard pages + shared helpers
-tests/                     # TDD suite (~124 tests) + synthetic fixtures
+  ui/                      # 9 dashboard pages + shared design-system helpers
+tests/                     # TDD suite (~201 tests) + synthetic fixtures
 docs/superpowers/          # approved spec + plan
 ```
 
-## Dashboard pages
+## Dashboard (redesigned interface)
 
-Overview · Methodology (honest limitations) · Dataset Explorer ·
-Photo Analysis (static features only — no temporal claims from one frame) ·
-Video Analysis (window features + model predictions if a bundle exists) ·
-Live Camera (rolling window; friendly failure without a device) ·
-Training & Evaluation (real subprocess runs with log tails) ·
-Research Results (renders only existing files; missing → exact command shown).
+`python -m streamlit run app.py` starts the shell: branded sidebar →
+sectioned navigation → the selected page. Destinations only appear in the
+sidebar once implemented. Every number rendered by the dashboard is read
+from real files or computed live — nothing is fabricated, and no download
+is ever offered.
+
+**Workspace**
+
+- **Overview** — live status of dataset / models / results (read from
+  disk), recent session activity, and next-step CTAs.
+- **Photo Analysis** — upload → validation → explicit analyse: detection,
+  spatial density grid, static features. Temporal outputs are intentionally
+  absent (one frame has no window).
+- **Video Analysis** — upload → batched, cancellable processing (24-frame
+  batches; Cancel/Stop takes effect at batch boundaries). Timeline charts,
+  window-level model predictions, annotated-frame strip, optional annotated
+  video export, CSV/JSON downloads.
+- **Live Camera** — rolling window over a camera device with measured
+  FPS/latency; the device is only opened on "Start capture" and always
+  released on stop/navigation. Without a device the page fails gracefully
+  with the real error message.
+
+**Research**
+
+- **Dataset Explorer** — live probe of the placed UCSD dataset (sequence
+  and frame counts, per-sequence table, built-table stats, provenance and
+  annotation facts). When the dataset is absent it shows the exact placement
+  tree and inspection command; it never downloads anything.
+- **Research Lab** — runs the real pipeline scripts as subprocesses (run
+  controls below), A/B/C + D result charts, evaluation table, Experiment
+  E-gate status, figure gallery, and the methodology/provenance write-up.
+- **Model Registry** — every `models/*.joblib` bundle: algorithm, trained
+  timestamp, training rows, artifact size, validation metrics, feature
+  schema; held-out test metrics from `reports/results/evaluation.json`; the
+  default-inference-model selector (invalid or stale picks fall back to the
+  newest available bundle with a visible warning).
+- **Reports** — this session's analysis history (table, per-run detail
+  expanders, CSV export, clear-with-confirmation) plus the research results
+  that exist on disk (tables with CSV export where data exists, figure
+  gallery, and the exact command for every missing output).
+
+**System**
+
+- **Settings** — session preferences (validated on save, applied to the
+  next analysis) and a whitelisted diagnostics panel (Python/Streamlit
+  versions, torch device, dataset/model/results presence — no paths, no
+  environment values, no secrets).
+
+### Session-only history
+
+Analysis history (Photo/Video/Camera runs) lives in the browser session and
+**is not persisted** — it disappears when the tab closes. Use Reports →
+"Download history CSV" to keep a copy. Settings are session-only too.
+
+### Settings (System → Settings)
+
+| Setting | Range / choices | Default | Effect |
+|---------|-----------------|---------|--------|
+| Detection confidence | 0.05–0.95 (step 0.05) | 0.25 | YOLO gate for counting a person (Photo/Video/Camera) |
+| Frame stride | 1–10 | 1 | Process every Nth video frame (Video) |
+| Max frames per video | 60–1200 | 300 | Hard cap per video run |
+| Processing resolution | 640 / 1280 / 1920 (long side px) | 1280 | Speed/quality on CPU (Video/Camera) |
+| Show density overlays | on / off | on | Density heatmap overlays (Photo/Camera) |
+| Default model | any registered bundle | newest bundle | Inference bundle for Video/Camera, chosen on Model Registry |
+
+### Research Lab run controls
+
+Steps run as real subprocesses (`prepare_data`, `train_ml`, `evaluate`),
+**one run at a time**: a live elapsed timer, a tail of the real log
+(`reports/results/run_<step>.log`), and **Cancel** that terminates the
+process. `prepare` and `train` additionally require an explicit confirmation
+checkbox because they rewrite result files. The E-gate card always reports
+Experiment E as `not_supported` with its reason — the UI never enables it
+without validated congestion labels.
