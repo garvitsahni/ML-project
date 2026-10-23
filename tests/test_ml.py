@@ -136,3 +136,54 @@ def test_predict_schema_mismatch_raises(tmp_path, synthetic_xy):
     X_wrong = np.zeros((5, 99))
     with pytest.raises(ValueError):
         predict(bundle, X_wrong)
+
+
+# ------------------------------------------------- SoftVoteModel (ensemble)
+class StubProbaModel:
+    """Fixed P(1) per row; module-level class so it pickles."""
+
+    def __init__(self, proba):
+        self.proba = np.asarray(proba, float)
+
+    def predict_proba(self, X):
+        p1 = self.proba[: len(X)]
+        return np.column_stack([1.0 - p1, p1])
+
+    def predict(self, X):
+        return (self.proba[: len(X)] >= 0.5).astype(int)
+
+
+def test_soft_vote_model_mean_and_threshold():
+    from src.models.tuning import SoftVoteModel
+
+    ens = SoftVoteModel([StubProbaModel([0.9, 0.1]), StubProbaModel([0.2, 0.4])])
+    X = np.zeros((2, 3))
+    proba = ens.predict_proba(X)
+    np.testing.assert_allclose(proba[:, 1], [0.55, 0.25])  # exact column mean
+    np.testing.assert_allclose(proba.sum(axis=1), 1.0)
+    assert list(ens.predict(X)) == [1, 0]  # 0.55 >= 0.5, 0.25 < 0.5
+    ens.threshold = 0.6
+    assert list(ens.predict(X)) == [0, 0]  # threshold respected
+
+
+def test_soft_vote_model_validates_members():
+    from src.models.tuning import SoftVoteModel
+
+    with pytest.raises(ValueError):
+        SoftVoteModel([])
+
+
+def test_soft_vote_model_joblib_roundtrip(tmp_path, synthetic_xy):
+    import joblib
+
+    from src.models.tuning import SoftVoteModel
+
+    X, y, _ = synthetic_xy
+    members = [train_model(a, X, y, seed=42) for a in ("logreg", "dt")]
+    ens = SoftVoteModel(members, threshold=0.4)
+    path = tmp_path / "ens.joblib"
+    joblib.dump(ens, path)
+    loaded = joblib.load(path)
+    np.testing.assert_allclose(loaded.predict_proba(X), ens.predict_proba(X))
+    assert list(loaded.predict(X)) == list(ens.predict(X))
+    assert loaded.threshold == 0.4

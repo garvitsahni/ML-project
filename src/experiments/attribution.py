@@ -105,9 +105,15 @@ def run_attribution(
                        -(tuned[a]["val_metrics"].get("roc_auc") or 0.0)),
     )[:ENSEMBLE_MEMBERS]
 
-    # the tuned_threshold entry reports the best single algorithm by val AUC
+    # the tuned_threshold entry reports the best single algorithm by val AUC;
+    # per_algorithm carries every tuned entry (thresholds + provenance) for
+    # train_ml.py --tune to persist bundles without touching test again
     best_single = best_algos[0]
-    out["tuned_threshold"] = {"best_algorithm": best_single, **tuned[best_single]}
+    out["tuned_threshold"] = {
+        "best_algorithm": best_single,
+        "per_algorithm": tuned,
+        **tuned[best_single],
+    }
 
     # 4. soft-vote ensemble of the top-3 by val AUC; threshold on val
     ensemble_val_scores = soft_vote(np.column_stack([

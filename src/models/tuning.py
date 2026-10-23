@@ -78,3 +78,28 @@ def soft_vote(score_matrix: np.ndarray) -> np.ndarray:
             "score_matrix must be 2-D (n_samples, n_models) with >=1 model"
         )
     return matrix.mean(axis=1)
+
+
+class SoftVoteModel:
+    """Mean-probability soft vote over fitted member pipelines (picklable).
+
+    ``predict`` labels P(anomaly) >= ``threshold``. Members must expose
+    ``predict_proba`` (all five bundled algorithms do).
+    """
+
+    def __init__(self, member_pipelines: list, threshold: float = 0.5):
+        if not member_pipelines:
+            raise ValueError("SoftVoteModel requires at least one member pipeline")
+        self.member_pipelines = list(member_pipelines)
+        self.threshold = float(threshold)
+
+    def predict_proba(self, X) -> np.ndarray:
+        probas = np.column_stack([
+            np.asarray(m.predict_proba(X), dtype=float)[:, 1]
+            for m in self.member_pipelines
+        ])
+        p1 = probas.mean(axis=1)
+        return np.column_stack([1.0 - p1, p1])
+
+    def predict(self, X) -> np.ndarray:
+        return (self.predict_proba(X)[:, 1] >= self.threshold).astype(int)
