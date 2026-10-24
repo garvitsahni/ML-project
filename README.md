@@ -182,16 +182,20 @@ is ever offered.
 
 **Workspace**
 
-- **Overview** — live status of dataset / models / results (read from
-  disk), this session's analysis history (CSV export and
-  clear-with-confirmation), and next-step CTAs.
-- **Photo Analysis** — upload → validation → explicit analyse: detection,
-  spatial density grid, static features. Temporal outputs are intentionally
-  absent (one frame has no window).
-- **Video Analysis** — upload → batched, cancellable processing (24-frame
-  batches; Cancel/Stop takes effect at batch boundaries). Timeline charts,
-  window-level model predictions, annotated-frame strip, optional annotated
-  video export, CSV/JSON downloads.
+- **Overview** — three task choices (photo / video / camera), one quiet
+  live-status line (models, dataset, evaluation, runs this session — read
+  from disk), session history in a collapsed *This session* expander with
+  CSV download and clear-with-confirmation, and the quiet
+  *About the numbers* list.
+- **Photo Analysis** — three steps — upload, check, results: validation,
+  then explicit analyse → detection, spatial density grid, static
+  features. Temporal outputs are intentionally absent (one frame has no
+  window).
+- **Video Analysis** — three steps — upload, check, results: batched,
+  cancellable processing (24-frame batches; Cancel/Stop takes effect at
+  batch boundaries). Timeline charts, window-level model predictions,
+  annotated-frame strip, optional annotated video export, CSV/JSON
+  downloads.
 - **Live Camera** — rolling window over a camera device with measured
   FPS/latency; the device is only opened on "Start capture" and always
   released on stop/navigation. Without a device the page fails gracefully
