@@ -27,7 +27,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "frame_stride": 1,        # process every Nth video frame (1–10)
     "max_frames": 300,        # video processing cap (60–1200)
     "process_max_side": 1280, # processing resolution: long side px
-    "selected_model": None,   # inference bundle; None = newest available
     "show_density": True,     # density heatmap overlays
 }
 
@@ -115,10 +114,6 @@ def validate_settings(raw: Any) -> tuple[dict[str, Any], list[str]]:
                     f"(got {value}); using default {default}.")
                 continue
             clean[key] = num
-        elif key == "selected_model":
-            # None or artifact path string; existence is checked against the
-            # model registry at inference time, not here.
-            clean[key] = value if isinstance(value, str) or value is None else None
         elif key == "show_density":
             clean[key] = bool(value)
     return clean, errors

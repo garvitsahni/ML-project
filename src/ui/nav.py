@@ -4,17 +4,16 @@ The app shell builds `st.navigation` from `GROUPS`. Individual pages are
 imported as modules; CTAs inside pages import this module lazily (inside
 `render()`) to avoid import cycles.
 
-Nav map (spec §4): destinations are only listed once implemented — legacy
-Training & Evaluation and Methodology pages are folded into Research Lab;
-Research Results is replaced by Reports (session history + results).
+Nav map: two groups only — Workspace (the four operator surfaces) and
+System (Settings). Research tooling lives in the CLI scripts under
+scripts/, not in this dashboard.
 """
 
 from __future__ import annotations
 
 import streamlit as st
 
-from src.ui import (page_camera, page_datasets, page_models, page_overview,
-                    page_photo, page_research, page_reports, page_settings,
+from src.ui import (page_camera, page_overview, page_photo, page_settings,
                     page_video)
 
 OVERVIEW = st.Page(page_overview.render, title="Overview", icon=":material/home:",
@@ -25,19 +24,10 @@ VIDEO = st.Page(page_video.render, title="Video Analysis", icon=":material/video
                 url_path="video-analysis")
 CAMERA = st.Page(page_camera.render, title="Live Camera", icon=":material/videocam:",
                  url_path="camera")
-DATASETS = st.Page(page_datasets.render, title="Dataset Explorer",
-                   icon=":material/storage:", url_path="datasets")
-RESEARCH = st.Page(page_research.render, title="Research Lab",
-                   icon=":material/science:", url_path="research")
-MODELS = st.Page(page_models.render, title="Model Registry",
-                 icon=":material/model_training:", url_path="models")
-REPORTS = st.Page(page_reports.render, title="Reports",
-                  icon=":material/assessment:", url_path="reports")
 SETTINGS = st.Page(page_settings.render, title="Settings",
                    icon=":material/tune:", url_path="settings")
 
 GROUPS: dict[str, list] = {
     "Workspace": [OVERVIEW, PHOTO, VIDEO, CAMERA],
-    "Research": [DATASETS, RESEARCH, MODELS, REPORTS],
     "System": [SETTINGS],
 }

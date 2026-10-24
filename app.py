@@ -31,10 +31,9 @@ def _render_sidebar_status() -> None:
         text, _emoji = model_status_badge(model_path)
         components.status_pill(text, "ok" if model_path else "warn")
         settings = state.settings()
-        selected = settings.get("selected_model") or "newest bundle"
         st.caption(
             f"confidence ≥ {settings['conf_threshold']:.2f} · "
-            f"stride {settings['frame_stride']} · inference: {selected}"
+            f"stride {settings['frame_stride']} · inference: newest bundle"
         )
         st.caption("Density · tracking · movement features "
                    "for crowd anomaly research (UCSD)")

@@ -2,21 +2,22 @@
 
 Every number on this page is read from disk at render time (models/,
 data/, reports/). Nothing is hardcoded; absent artifacts render as
-informative empty states.
+informative empty states. Session history (CSV export + clear) lives
+here so operators never need a separate reports page.
 """
 
 from __future__ import annotations
 
 import time
+from datetime import datetime
 
 import streamlit as st
 
 from src.config import load_paths
 from src.ui import components as ui
 from src.ui import state
-from src.ui.common import (FIGURES_DIR, RESULTS_DIR, dataset_probe,
-                           limitations, list_model_files, list_result_files,
-                           load_evaluation)
+from src.ui.common import dataset_probe, limitations, list_model_files, \
+    load_evaluation
 
 _PROBE_TTL_SECONDS = 120
 
@@ -36,14 +37,12 @@ def _render_models_status() -> None:
     st.markdown("**Models**")
     files = list_model_files()
     if not files:
-        if ui.empty_state(
+        ui.empty_state(
             "No trained model available",
-            "Run the training pipeline to produce the five candidate bundles.",
-            action_label="Open Training & Evaluation",
+            "Train bundles on the analysis machine: "
+            "`python scripts/train_ml.py`.",
             key="models_empty",
-        ):
-            from src.ui import nav
-            _goto(nav.TRAINING)
+        )
         return
     ui.status_pill(
         f"{len(files)} trained bundle{'s' if len(files) != 1 else ''}", "ok")
@@ -61,15 +60,13 @@ def _render_dataset_status() -> None:
                  f"{ui.format_count(probe['frames'])} frames")
         st.caption(f"{ui.format_count(probe['anomalous'])} anomalous-frame labels")
     else:
-        if ui.empty_state(
+        ui.empty_state(
             "Dataset not found",
-            "Datasets are never auto-downloaded — the Dataset Explorer shows "
-            "exact placement instructions.",
-            action_label="Open Dataset Explorer",
+            "Datasets are never auto-downloaded — place UCSD v1p2 under "
+            "`data/raw/ucsd_anomaly/UCSD_Anomaly_Dataset.v1p2` "
+            "(see configs/paths.yaml).",
             key="dataset_empty",
-        ):
-            from src.ui import nav
-            _goto(nav.DATASETS)
+        )
 
 
 def _render_evaluation_status() -> None:
@@ -77,62 +74,17 @@ def _render_evaluation_status() -> None:
     evaluation = load_evaluation()
     bundles = evaluation.get("bundles") or {}
     if not bundles:
-        if ui.empty_state(
+        ui.empty_state(
             "No evaluation yet",
             "Run training, then evaluation, to produce "
             "`reports/results/evaluation.json`.",
-            action_label="Open Training & Evaluation",
             key="eval_empty",
-        ):
-            from src.ui import nav
-            _goto(nav.TRAINING)
+        )
         return
     ui.status_pill(f"evaluation.json · {len(bundles)} bundles", "ok")
     st.write(f"**{evaluation.get('n_test_windows', 0)} held-out test windows**")
     st.caption(f"{len(evaluation.get('test_sequences', []))} test sequences "
                "(grouped split — no sequence spans train/test)")
-    if st.button("Open Reports", key="eval_open_results"):
-        from src.ui import nav
-        _goto(nav.REPORTS)
-
-
-def _render_available_models() -> None:
-    import pandas as pd
-
-    files = list_model_files()
-    if not files:
-        ui.empty_state("No model artifacts on disk")
-        return
-    rows = [
-        [path.name, f"{path.stat().st_size / 1024:.1f}",
-         time.strftime("%Y-%m-%d %H:%M", time.localtime(mtime))]
-        for path, mtime in files
-    ]
-    st.dataframe(pd.DataFrame(rows, columns=["Bundle", "Size (KB)", "Modified"]),
-                 hide_index=True, width="stretch")
-    ui.data_note("Source: models/ — schema-versioned joblib bundles used for "
-                 "video/camera window inference.")
-
-
-def _render_research_outputs() -> None:
-    result_files = list_result_files(RESULTS_DIR)
-    fig_count = len(list(FIGURES_DIR.glob("*.png"))) if FIGURES_DIR.is_dir() else 0
-    if not result_files and not fig_count:
-        if ui.empty_state(
-            "No research results yet",
-            "Run `python scripts/train_ml.py` (experiments A–D) and "
-            "`python scripts/evaluate.py` to populate reports/.",
-            action_label="Open Training & Evaluation",
-            key="outputs_empty",
-        ):
-            from src.ui import nav
-            _goto(nav.TRAINING)
-        return
-    ui.status_pill(f"{len(result_files)} result files · {fig_count} figures", "ok")
-    st.write(" · ".join(f"`{p.name}`" for p in result_files) or "—")
-    if st.button("Open Reports", key="outputs_open_results"):
-        from src.ui import nav
-        _goto(nav.REPORTS)
 
 
 def _render_recent_activity() -> None:
@@ -148,24 +100,31 @@ def _render_recent_activity() -> None:
     rows = ui.history_rows(entries)
     st.dataframe(pd.DataFrame(rows, columns=["When", "Input", "Key results"]),
                  hide_index=True, width="stretch")
-    ui.data_note("Session-only history — not persisted to disk; cleared when "
-                 "the app server restarts.")
-    if st.button("Open Reports", key="activity_open_reports"):
-        from src.ui import nav
-        _goto(nav.REPORTS)
+    ui.data_note("Session-only history — not persisted to disk; download the "
+                 "CSV to keep a copy.")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M")
+    ui.download_csv("Download history CSV", ui.export_csv(entries),
+                    f"crowdsense_history_{stamp}.csv",
+                    help="Full session history with raw result keys.")
+    confirmed = st.checkbox("I understand this clears the session history",
+                            key="activity_clear_confirm")
+    if st.button("Clear history", key="activity_clear_go",
+                 disabled=not confirmed) and confirmed:
+        state.clear_history()
+        st.rerun()
 
 
 def render() -> None:
     from src.ui import nav
 
     ui.page_header(
-        eyebrow="Crowd analytics research",
+        eyebrow="Crowd analytics",
         title="CrowdSense AI",
         description=(
             "Analyse crowd photographs, videos and live camera streams: "
-            "detect and track people, estimate density, extract movement "
-            "features, and evaluate trained ML models. Every value shown is "
-            "computed from your inputs or read from files under reports/."),
+            "detect and track people, estimate density, and extract "
+            "movement features. Every value shown is computed from your "
+            "inputs or read from files under reports/."),
     )
 
     c1, c2, c3 = st.columns(3)
@@ -191,21 +150,9 @@ def render() -> None:
         with s3:
             _render_evaluation_status()
 
-    m1, m2 = st.columns(2)
-    with m1:
-        with ui.card("Available models",
-                     hint="Trained bundles used for video/camera inference."):
-            _render_available_models()
-    with m2:
-        with ui.card("Recent activity",
-                     hint="Analyses from this browser session."):
-            _render_recent_activity()
+    with ui.card("Recent activity",
+                 hint="Analyses from this browser session."):
+        _render_recent_activity()
 
-    with ui.card("Research outputs",
-                 hint="The dashboard renders only files that exist under reports/."):
-        _render_research_outputs()
-
-    with ui.card("Limitations (read before citing anything)"):
+    with ui.card("About the numbers"):
         ui.render_limitations(limitations())
-        if st.button("Full methodology", key="limitations_methodology"):
-            _goto(nav.METHODOLOGY)

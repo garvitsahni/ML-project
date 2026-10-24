@@ -189,3 +189,55 @@ def download_csv(label: str, data: str | bytes, file_name: str,
     """Consistent CSV export button."""
     st.download_button(label, data=data, file_name=file_name,
                        mime="text/csv", help=help)
+
+
+_MISSING = "—"
+
+
+def _entry_input(entry: dict) -> str:
+    kind = entry.get("kind")
+    if kind == "photo":
+        return "uploaded photo"
+    if kind == "video":
+        return str(entry.get("video") or _MISSING)
+    if kind == "camera":
+        return f"camera {entry.get('device')}"
+    return _MISSING
+
+
+def _entry_results(entry: dict) -> str:
+    kind = entry.get("kind")
+    if kind == "photo" and entry.get("persons") is not None:
+        return f"{entry['persons']} persons"
+    if kind == "video" and entry.get("windows") is not None:
+        return f"{entry['windows']} windows · {entry.get('frames', 0)} frames"
+    if kind == "camera" and entry.get("frames") is not None:
+        return f"{entry['frames']} frames"
+    return _MISSING
+
+
+def history_frame(entries: list[dict]):
+    """Flat, display-ready table of session history entries (in order)."""
+    import pandas as pd
+
+    columns = ["time", "input", "kind", "model", "results", "duration"]
+    rows = [{
+        "time": str(e.get("ts", "")).replace("T", " "),
+        "input": _entry_input(e),
+        "kind": _KIND_LABELS.get(e.get("kind"), str(e.get("kind", _MISSING))),
+        "model": str(e.get("model") or _MISSING),
+        "results": _entry_results(e),
+        "duration": (f"{e['seconds']} s" if e.get("seconds") is not None
+                     else _MISSING),
+    } for e in entries]
+    return pd.DataFrame(rows, columns=columns)
+
+
+def export_csv(entries: list[dict]) -> str:
+    """History table + raw summary keys — machine-usable, properly quoted."""
+    import pandas as pd
+
+    table = history_frame(entries).reset_index(drop=True)
+    raw = pd.DataFrame([{k: str(v) for k, v in e.items()}
+                        for e in entries]).reset_index(drop=True)
+    return pd.concat([table, raw], axis=1).to_csv(index=False)

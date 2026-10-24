@@ -122,8 +122,6 @@ def _render_form() -> None:
             else:
                 st.success("Settings saved — they apply to the next "
                            "analysis.")
-        st.caption("The default model bundle is chosen on the Model Registry "
-                   "page.")
 
 
 def _render_reset() -> None:

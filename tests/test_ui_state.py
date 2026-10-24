@@ -20,7 +20,6 @@ def test_init_session_populates_defaults_and_is_idempotent():
     assert s["frame_stride"] == 1
     assert s["max_frames"] == 300
     assert s["process_max_side"] == 1280
-    assert s["selected_model"] is None
     assert s["show_density"] is True
     # second call must not clobber user changes
     s["conf_threshold"] = 0.5
@@ -49,7 +48,7 @@ def test_update_settings_accepts_valid_values():
 def test_validate_settings_rejects_out_of_range_uses_defaults():
     clean, errors = state.validate_settings(
         {"conf_threshold": 1.5, "frame_stride": 0, "max_frames": 99999,
-         "process_max_side": 777, "selected_model": None, "show_density": True},
+         "process_max_side": 777, "show_density": True},
     )
     assert clean["conf_threshold"] == 0.25
     assert clean["frame_stride"] == 1
