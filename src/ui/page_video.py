@@ -606,6 +606,17 @@ def _render_cancelled(run: dict) -> None:
 # page entrypoint
 # --------------------------------------------------------------------------
 
+def video_step(has_upload: bool, phase: str | None) -> int:
+    """Which step of the guided flow to show: 1 Upload, 2 Check, 3 Results.
+
+    Processing, cancellation and errors all stay on step 2 (Check) —
+    only a completed run advances to Results.
+    """
+    if not has_upload:
+        return 1
+    return 3 if phase == "done" else 2
+
+
 def render() -> None:
     ui.page_header(
         title="Video Analysis",
@@ -618,8 +629,13 @@ def render() -> None:
 
     st.session_state.setdefault("video_upload_nonce", 0)
     nonce = int(st.session_state["video_upload_nonce"])
+    upload_key = f"video_uploader_{nonce}"
+    uploaded_flag = st.session_state.get(upload_key) is not None
+    phase = (st.session_state.get("video_run") or {}).get("phase")
+    ui.step_rail(video_step(uploaded_flag, phase), ui.STEP_LABELS)
+
     uploaded = st.file_uploader(
-        "Video file", type=VIDEO_TYPES, key=f"video_uploader_{nonce}",
+        "Video file", type=VIDEO_TYPES, key=upload_key,
         help="MP4, AVI, MOV or MKV — up to "
              f"{_MAX_VIDEO_MB} MB. Stored for this session only.")
     if uploaded is None:

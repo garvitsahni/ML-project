@@ -440,3 +440,25 @@ def test_photo_step_reflects_upload_and_result():
     assert photo_step(True, False) == 2
     assert photo_step(True, True) == 3
     assert photo_step(False, True) == 3   # result wins over stale upload flag
+
+
+def test_video_step_reflects_upload_and_phase():
+    from src.ui.page_video import video_step
+
+    assert video_step(False, None) == 1
+    assert video_step(True, None) == 2
+    assert video_step(True, "processing") == 2
+    assert video_step(True, "cancelled") == 2
+    assert video_step(True, "error") == 2
+    assert video_step(True, "done") == 3
+
+
+def test_video_config_keeps_editable_controls():
+    import inspect
+
+    from src.ui import page_video
+
+    src = inspect.getsource(page_video._render_config)
+    assert src.count("st.slider(") >= 2       # stride + max frames stay editable
+    assert "st.toggle(" in src                # annotated-export toggle stays
+    assert "Process video" in src
