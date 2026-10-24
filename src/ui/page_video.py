@@ -608,7 +608,6 @@ def _render_cancelled(run: dict) -> None:
 
 def render() -> None:
     ui.page_header(
-        eyebrow="Workspace · video file",
         title="Video Analysis",
         description=(
             "Sliding-window crowd analysis of an uploaded clip: person "

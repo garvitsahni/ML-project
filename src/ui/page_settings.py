@@ -146,7 +146,6 @@ def _render_diagnostics() -> None:
 
 def render() -> None:
     ui.page_header(
-        eyebrow="System",
         title="Settings",
         description=("Session preferences for detection and processing — "
                      "validated on save, applied to the next analysis."),

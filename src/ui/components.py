@@ -69,15 +69,47 @@ def format_seconds(s: object) -> str:
 # render helpers
 # --------------------------------------------------------------------------
 
-def page_header(title: str, description: str | None = None,
-                eyebrow: str | None = None) -> None:
-    """Consistent page-level heading: eyebrow, H1, one-line description."""
-    eye = f'<p class="page-eyebrow">{html.escape(eyebrow)}</p>' if eyebrow else ""
+def page_header(title: str, description: str | None = None) -> None:
+    """Consistent page-level heading: H1 plus one plain sentence."""
     desc = f'<p class="page-desc">{html.escape(description)}</p>' if description else ""
     st.markdown(
-        f'<header class="page-header">{eye}<h1>{html.escape(title)}</h1>{desc}</header>',
+        f'<header class="page-header"><h1>{html.escape(title)}</h1>{desc}</header>',
         unsafe_allow_html=True,
     )
+
+
+# --------------------------------------------------------------------------
+# guided step rail (Upload → Check → Results)
+# --------------------------------------------------------------------------
+
+STEP_LABELS: tuple[str, ...] = ("Upload", "Check", "Results")
+
+
+def steps_html(current: int, labels: Sequence[str]) -> str:
+    """HTML for a numbered step rail.
+
+    Label *i* (1-based) is done when ``i < current``, current when
+    ``i == current``, pending otherwise. ``current`` is clamped into
+    ``1..len(labels)`` so the rail never lies outside its labels, and
+    labels are HTML-escaped.
+    """
+    n = len(labels)
+    current = max(1, min(int(current), n)) if n else 1
+    items: list[str] = []
+    for i, label in enumerate(labels, start=1):
+        safe = html.escape(str(label))
+        if i < current:
+            items.append(f'<li class="step is-done"><span class="step__num">✓</span>{safe}</li>')
+        elif i == current:
+            items.append(f'<li class="step is-now"><span class="step__num">{i}</span>{safe}</li>')
+        else:
+            items.append(f'<li class="step"><span class="step__num">{i}</span>{safe}</li>')
+    return f'<ol class="steps">{"".join(items)}</ol>'
+
+
+def step_rail(current: int, labels: Sequence[str] = STEP_LABELS) -> None:
+    """Render the guided step rail in place."""
+    st.markdown(steps_html(current, labels), unsafe_allow_html=True)
 
 
 @contextmanager

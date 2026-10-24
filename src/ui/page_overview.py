@@ -118,7 +118,6 @@ def render() -> None:
     from src.ui import nav
 
     ui.page_header(
-        eyebrow="Crowd analytics",
         title="CrowdSense AI",
         description=(
             "Analyse crowd photographs, videos and live camera streams: "

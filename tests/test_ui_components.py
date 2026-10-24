@@ -241,3 +241,27 @@ def test_streamlit_config_is_light():
     assert 'base = "light"' in text
     assert 'primaryColor = "#0F766E"' in text
     assert 'backgroundColor = "#FFFFFF"' in text
+
+
+def test_page_header_has_no_eyebrow_parameter():
+    import inspect
+
+    from src.ui import components
+
+    assert "eyebrow" not in inspect.signature(components.page_header).parameters
+
+
+def test_steps_html_marks_done_now_and_pending():
+    from src.ui import components
+
+    labels = components.STEP_LABELS
+    first = components.steps_html(1, labels)
+    assert 'class="step is-now"' in first
+    assert "is-done" not in first
+    second = components.steps_html(2, labels)
+    assert second.index("is-done") < second.index("is-now")
+    assert "Upload" in second and "✓" in second
+    clamped = components.steps_html(99, labels)
+    assert clamped.count("is-now") == 1 and clamped.endswith("</ol>")
+    escaped = components.steps_html(1, ("<b>",))
+    assert "<b>" not in escaped and "&lt;b&gt;" in escaped

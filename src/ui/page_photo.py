@@ -333,7 +333,6 @@ def _render_results(result: dict) -> None:
 
 def render() -> None:
     ui.page_header(
-        eyebrow="Workspace · single frame",
         title="Photo Analysis",
         description=(
             "Static analysis of one image: person detection, spatial "

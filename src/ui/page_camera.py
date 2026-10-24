@@ -472,7 +472,6 @@ def _render_final(run: dict) -> None:
 
 def render() -> None:
     ui.page_header(
-        eyebrow="Workspace · webcam",
         title="Live Camera",
         description=(
             "Rolling 30-frame window of density and movement features from "
