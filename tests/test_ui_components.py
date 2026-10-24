@@ -214,3 +214,30 @@ def test_export_csv_round_trips():
     # raw summary keys preserved for machine use
     assert rows[0]["persons"] == "5"
     assert rows[1]["windows"] == "3"
+
+
+def test_theme_tokens_light_direction():
+    from src.ui import theme
+
+    assert theme.TOKENS["bg"] == "#FFFFFF"
+    assert theme.TOKENS["accent"] == "#0F766E"
+    assert theme.TOKENS["success"] == "#16A34A"
+    assert theme.TOKENS["border"] == "#E4E9EF"
+
+
+def test_theme_css_drops_eyebrow_and_dark_hexes():
+    from src.ui import theme
+
+    assert ".page-eyebrow" not in theme.CSS
+    for dark in ("#0B1220", "#111A2B", "#2DD4BF", "#0D1422"):
+        assert dark not in theme.CSS
+
+
+def test_streamlit_config_is_light():
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / ".streamlit"
+            / "config.toml").read_text(encoding="utf-8")
+    assert 'base = "light"' in text
+    assert 'primaryColor = "#0F766E"' in text
+    assert 'backgroundColor = "#FFFFFF"' in text

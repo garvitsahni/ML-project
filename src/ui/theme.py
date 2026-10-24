@@ -1,8 +1,9 @@
-"""Design tokens and global CSS for the CrowdSense AI dark shell.
+"""Design tokens and global CSS for the CrowdSense AI light console.
 
 `TOKENS` is the single source of truth for palette/spacing/radii; the
 `.streamlit/config.toml` theme mirrors the core colors so native widgets
-match, and `CSS` styles everything custom (headers, pills, cards, tables).
+match, and `CSS` styles everything custom (headers, status dots, steps,
+tables).
 
 Rendering note: `inject_theme()` must be called on every Streamlit run —
 Streamlit removes elements that are not re-rendered, so a "once per
@@ -15,25 +16,26 @@ from __future__ import annotations
 import streamlit as st
 
 TOKENS: dict = {
-    # surfaces — deep navy-charcoal shell
-    "bg": "#0B1220",
-    "surface": "#111A2B",
-    "surface_2": "#162136",
-    "sidebar_bg": "#0D1422",
-    "border": "#1F2A3E",
+    # surfaces — white page, soft panels
+    "bg": "#FFFFFF",
+    "surface": "#FAFBFC",
+    "surface_2": "#FBFCFD",
+    "sidebar_bg": "#F6F8FA",
+    "border": "#E4E9EF",
     # text
-    "text": "#E6EDF3",
-    "text_muted": "#8B98AC",
-    # accent — restrained teal
-    "accent": "#2DD4BF",
-    "accent_dim": "#14B8A6",
+    "heading": "#0F172A",
+    "text": "#1B2430",
+    "text_muted": "#5B6675",
+    # accent — dark teal, legible on white
+    "accent": "#0F766E",
+    "accent_soft": "#E6F5F3",
     # semantic status (always paired with a text label, never color alone)
-    "success": "#34D399",
-    "warn": "#FBBF24",
-    "danger": "#F87171",
+    "success": "#16A34A",
+    "warn": "#B45309",
+    "danger": "#DC2626",
     "info": "#60A5FA",
     # scales
-    "radii": {"sm": "6px", "md": "10px", "lg": "14px"},
+    "radii": {"sm": "6px", "md": "8px", "lg": "10px"},
     "space": {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px"},
     "max_content": "1280px",
     "font_sans": '"Segoe UI", system-ui, -apple-system, sans-serif',
@@ -55,20 +57,12 @@ _RULES = """
 /* ---------- page header ---------- */
 .page-header { margin: 0 0 1.1rem; }
 .page-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
-  margin: 0.15rem 0 0;
-  color: var(--text);
-}
-.page-eyebrow {
   margin: 0;
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--accent);
+  color: var(--heading);
 }
 .page-desc {
   margin: 0.4rem 0 0;
@@ -83,23 +77,23 @@ _RULES = """
   margin: 0 0 0.35rem;
   font-size: 0.95rem;
   font-weight: 650;
-  color: var(--text);
+  color: var(--heading);
 }
 .card-hint { margin: -0.2rem 0 0.6rem; font-size: 0.8rem; color: var(--text-muted); }
 .data-note { margin: 0.35rem 0 0; font-size: 0.78rem; color: var(--text-muted); }
 
-/* ---------- status pills ---------- */
+/* ---------- status: quiet dot + word (never a bordered pill) ---------- */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.16rem 0.6rem;
-  border: 1px solid;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 650;
+  padding: 0;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 500;
   line-height: 1.4;
   white-space: nowrap;
+  color: var(--text-muted);
 }
 .pill__dot {
   width: 0.5rem;
@@ -108,23 +102,79 @@ _RULES = """
   background: currentColor;
   flex: none;
 }
-.pill--ok    { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); background: color-mix(in srgb, var(--success) 10%, transparent); }
-.pill--warn  { color: var(--warn);    border-color: color-mix(in srgb, var(--warn) 40%, transparent);    background: color-mix(in srgb, var(--warn) 10%, transparent); }
-.pill--error { color: var(--danger);  border-color: color-mix(in srgb, var(--danger) 40%, transparent);  background: color-mix(in srgb, var(--danger) 10%, transparent); }
-.pill--info  { color: var(--info);    border-color: color-mix(in srgb, var(--info) 40%, transparent);    background: color-mix(in srgb, var(--info) 10%, transparent); }
-.pill--idle  { color: var(--text-muted); border-color: var(--border); background: transparent; }
+.pill--ok    { color: var(--success); }
+.pill--warn  { color: var(--warn); }
+.pill--error { color: var(--danger); }
+.pill--info  { color: var(--info); }
+.pill--idle  { color: var(--text-muted); }
+
+/* ---------- status strip (overview one-liner) ---------- */
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.9rem;
+}
+
+/* ---------- step rail (guided flows) ---------- */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.6rem;
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+.step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.72rem;
+  font-weight: 650;
+  flex: none;
+}
+.step.is-done .step__num {
+  background: var(--success);
+  border-color: var(--success);
+  color: #FFFFFF;
+}
+.step.is-done { color: var(--text); }
+.step.is-now { color: var(--heading); font-weight: 650; }
+.step.is-now .step__num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
 
 /* ---------- empty / error states ---------- */
 .state-block {
   padding: 2rem 1.25rem;
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  background: var(--surface);
   text-align: center;
 }
-.state-block__title { margin: 0.3rem 0 0.25rem; font-size: 1rem; font-weight: 650; color: var(--text); }
+.state-block__title { margin: 0.3rem 0 0.25rem; font-size: 1rem; font-weight: 650; color: var(--heading); }
 .state-block__msg { margin: 0 auto; max-width: 62ch; font-size: 0.88rem; line-height: 1.55; color: var(--text-muted); }
-.state-block--error { border-style: solid; border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.state-block--error { border-style: solid; border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
 .state-block--error .state-block__title { color: var(--danger); }
 
 /* ---------- metric tiles ---------- */
@@ -132,10 +182,10 @@ _RULES = """
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--surface-2);
 }
 [data-testid="stMetricLabel"] { font-size: 0.78rem; color: var(--text-muted); }
-[data-testid="stMetricValue"] { font-size: 1.45rem; font-weight: 650; color: var(--text); }
+[data-testid="stMetricValue"] { font-size: 1.45rem; font-weight: 650; color: var(--heading); }
 
 /* ---------- tables & dataframes ---------- */
 [data-testid="dataframe"] { border-radius: var(--radius-sm); }
@@ -158,14 +208,14 @@ _RULES = """
 .crowdsense-mark {
   display: inline-flex; align-items: center; justify-content: center;
   width: 1.7rem; height: 1.7rem; border-radius: 7px;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
-  color: #06202B; font-weight: 800; font-size: 0.95rem; flex: none;
+  background: var(--accent);
+  color: #FFFFFF; font-weight: 800; font-size: 0.95rem; flex: none;
 }
-.crowdsense-name { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
-.crowdsense-sub { font-size: 0.7rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); }
+.crowdsense-name { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; color: var(--heading); }
+.crowdsense-sub { font-size: 0.74rem; color: var(--text-muted); }
 
 /* ---------- misc restraint ---------- */
-h1, h2, h3 { letter-spacing: -0.01em; }
+h1, h2, h3 { letter-spacing: -0.01em; color: var(--heading); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }

@@ -1,21 +1,21 @@
-# CrowdSense AI — application theme (dark analytics shell).
-# Deep navy-charcoal surfaces, restrained teal accent, subtle borders.
+# CrowdSense AI — application theme (light operator console).
+# White page, soft panels, dark teal accent, quiet borders.
 
 [theme]
-base = "dark"
-primaryColor = "#2DD4BF"
-backgroundColor = "#0B1220"
-secondaryBackgroundColor = "#111A2B"
-textColor = "#E6EDF3"
+base = "light"
+primaryColor = "#0F766E"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#FAFBFC"
+textColor = "#1B2430"
 font = "sans"
 baseRadius = "10"
 buttonRadius = "8"
-borderColor = "#1F2A3E"
-dataframeBorderColor = "#1F2A3E"
-dataframeHeaderBackgroundColor = "#162136"
-codeBackgroundColor = "#0E1626"
+borderColor = "#E4E9EF"
+dataframeBorderColor = "#E4E9EF"
+dataframeHeaderBackgroundColor = "#F6F8FA"
+codeBackgroundColor = "#F1F5F9"
 showSidebarBorder = true
-chartCategoricalColors = ["#2DD4BF", "#60A5FA", "#FBBF24", "#F87171", "#A78BFA", "#34D399"]
+chartCategoricalColors = ["#0F766E", "#60A5FA", "#FBBF24", "#DC2626", "#A78BFA", "#16A34A"]
 
 [theme.sidebar]
-backgroundColor = "#0D1422"
+backgroundColor = "#F6F8FA"
