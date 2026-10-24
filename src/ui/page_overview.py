@@ -1,14 +1,14 @@
-"""Overview: product intro, primary actions, live system status, activity.
+"""Overview: task choices, quiet live-status strip, session history.
 
 Every number on this page is read from disk at render time (models/,
 data/, reports/). Nothing is hardcoded; absent artifacts render as
-informative empty states. Session history (CSV export + clear) lives
-here so operators never need a separate reports page.
+warn/idle wording in the status strip. Session history (CSV export +
+clear-with-confirmation) lives here so operators never need a separate
+reports page.
 """
 
 from __future__ import annotations
 
-import time
 from datetime import datetime
 
 import streamlit as st
@@ -21,6 +21,23 @@ from src.ui.common import dataset_probe, limitations, list_model_files, \
 
 _PROBE_TTL_SECONDS = 120
 
+# task tiles — inline SVG icons from the approved mockup (no emoji)
+_ICONS = {
+    "photo": '<svg viewBox="0 0 24 24" width="19" height="19" '
+             'fill="none" stroke="#0F766E" stroke-width="1.6">'
+             '<rect x="3" y="4" width="18" height="16" rx="2"/>'
+             '<circle cx="8.5" cy="9.5" r="1.6"/>'
+             '<path d="M4 17l5-5 4 4 3-3 4 4"/></svg>',
+    "video": '<svg viewBox="0 0 24 24" width="19" height="19" '
+             'fill="none" stroke="#0F766E" stroke-width="1.6">'
+             '<rect x="3" y="5" width="18" height="14" rx="2"/>'
+             '<path d="M10 9.5l5 2.5-5 2.5z"/></svg>',
+    "camera": '<svg viewBox="0 0 24 24" width="19" height="19" '
+              'fill="none" stroke="#0F766E" stroke-width="1.6">'
+              '<path d="M4 8h3l2-2h6l2 2h3v10H4z"/>'
+              '<circle cx="12" cy="13" r="3.2"/></svg>',
+}
+
 
 @st.cache_data(ttl=_PROBE_TTL_SECONDS, show_spinner=False)
 def _probe_cached(root: str) -> dict:
@@ -28,130 +45,105 @@ def _probe_cached(root: str) -> dict:
     return dataset_probe(root)
 
 
-def _goto(page_obj) -> None:
-    """CTA helper: jump to another registered page."""
-    st.switch_page(page_obj)
+def status_items(model_count: int, probe: dict, evaluation: dict,
+                 runs: int) -> list[tuple[str, str]]:
+    """Quiet status-strip entries: (kind, text) pairs for `ui.pill`.
 
-
-def _render_models_status() -> None:
-    st.markdown("**Models**")
-    files = list_model_files()
-    if not files:
-        ui.empty_state(
-            "No trained model available",
-            "Train bundles on the analysis machine: "
-            "`python scripts/train_ml.py`.",
-            key="models_empty",
-        )
-        return
-    ui.status_pill(
-        f"{len(files)} trained bundle{'s' if len(files) != 1 else ''}", "ok")
-    newest, mtime = files[0]
-    st.write(f"Newest: **{newest.name}**")
-    st.caption("trained " + time.strftime("%Y-%m-%d %H:%M", time.localtime(mtime)))
-
-
-def _render_dataset_status() -> None:
-    st.markdown("**Dataset**")
-    probe = _probe_cached(str(load_paths().ucsd_dir))
-    if probe["available"]:
-        ui.status_pill("UCSD v1p2 ready", "ok")
-        st.write(f"**{probe['sequences']} sequences** · "
-                 f"{ui.format_count(probe['frames'])} frames")
-        st.caption(f"{ui.format_count(probe['anomalous'])} anomalous-frame labels")
+    Every value is a real read passed in by the caller; absent artifacts
+    render warn/idle wording, never green.
+    """
+    if model_count:
+        noun = "model bundle" if model_count == 1 else "model bundles"
+        models = ("ok", f"{model_count} {noun} ready")
     else:
-        ui.empty_state(
-            "Dataset not found",
-            "Datasets are never auto-downloaded — place UCSD v1p2 under "
-            "`data/raw/ucsd_anomaly/UCSD_Anomaly_Dataset.v1p2` "
-            "(see configs/paths.yaml).",
-            key="dataset_empty",
-        )
+        models = ("warn", "No models yet")
 
+    if probe.get("available"):
+        dataset = ("ok", f"Dataset ready · {probe['sequences']} sequences")
+    else:
+        dataset = ("warn", "Dataset not found")
 
-def _render_evaluation_status() -> None:
-    st.markdown("**Latest evaluation**")
-    evaluation = load_evaluation()
-    bundles = evaluation.get("bundles") or {}
-    if not bundles:
-        ui.empty_state(
-            "No evaluation yet",
-            "Run training, then evaluation, to produce "
-            "`reports/results/evaluation.json`.",
-            key="eval_empty",
-        )
-        return
-    ui.status_pill(f"evaluation.json · {len(bundles)} bundles", "ok")
-    st.write(f"**{evaluation.get('n_test_windows', 0)} held-out test windows**")
-    st.caption(f"{len(evaluation.get('test_sequences', []))} test sequences "
-               "(grouped split — no sequence spans train/test)")
+    if evaluation.get("bundles"):
+        windows = evaluation.get("n_test_windows", 0)
+        evaluation_item = ("idle", f"{windows} evaluation windows")
+    else:
+        evaluation_item = ("idle", "No evaluation yet")
 
+    if runs:
+        noun = "run" if runs == 1 else "runs"
+        runs_item = ("idle", f"{runs} {noun} this session")
+    else:
+        runs_item = ("idle", "No runs yet")
 
-def _render_recent_activity() -> None:
-    import pandas as pd
-
-    entries = state.get_history()
-    if not entries:
-        ui.empty_state(
-            "No analyses yet",
-            "Analyse a photo or video, or start the camera — results from "
-            "this session will be listed here.")
-        return
-    rows = ui.history_rows(entries)
-    st.dataframe(pd.DataFrame(rows, columns=["When", "Input", "Key results"]),
-                 hide_index=True, width="stretch")
-    ui.data_note("Session-only history — not persisted to disk; download the "
-                 "CSV to keep a copy.")
-    stamp = datetime.now().strftime("%Y%m%d-%H%M")
-    ui.download_csv("Download history CSV", ui.export_csv(entries),
-                    f"crowdsense_history_{stamp}.csv",
-                    help="Full session history with raw result keys.")
-    confirmed = st.checkbox("I understand this clears the session history",
-                            key="activity_clear_confirm")
-    if st.button("Clear history", key="activity_clear_go",
-                 disabled=not confirmed) and confirmed:
-        state.clear_history()
-        st.rerun()
+    return [models, dataset, evaluation_item, runs_item]
 
 
 def render() -> None:
     from src.ui import nav
 
     ui.page_header(
-        title="CrowdSense AI",
-        description=(
-            "Analyse crowd photographs, videos and live camera streams: "
-            "detect and track people, estimate density, and extract "
-            "movement features. Every value shown is computed from your "
-            "inputs or read from files under reports/."),
+        title="What do you want to analyse?",
+        description="Pick a task — system status and this session's "
+                    "runs are below.",
     )
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("Analyse photo", type="primary", width="stretch", key="cta_photo"):
-            _goto(nav.PHOTO)
-    with c2:
-        if st.button("Analyse video", type="primary", width="stretch", key="cta_video"):
-            _goto(nav.VIDEO)
-    with c3:
-        if st.button("Start camera", type="primary", width="stretch", key="cta_camera"):
-            _goto(nav.CAMERA)
+    tiles = [
+        ("Photo", "One image, quick count", "photo", "tile_photo", nav.PHOTO),
+        ("Video", "File, processed in steps", "video", "tile_video", nav.VIDEO),
+        ("Camera", "Live from a device", "camera", "tile_camera", nav.CAMERA),
+    ]
+    cols = st.columns(3)
+    for col, (name, desc, icon, key, page) in zip(cols, tiles):
+        with col:
+            with st.container(border=True):
+                st.markdown(
+                    f'<div class="tile">{_ICONS[icon]} '
+                    f'<strong>{name}</strong>'
+                    f'<div class="page-desc" style="margin-top:.2rem">'
+                    f'{desc}</div></div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button("Start →", key=key, width="stretch"):
+                    st.switch_page(page)
 
-    st.divider()
+    entries = state.get_history()
+    items = status_items(
+        len(list_model_files()),
+        _probe_cached(str(load_paths().ucsd_dir)),
+        load_evaluation(),
+        len(entries),
+    )
+    strip = "".join(ui.pill(text, kind) for kind, text in items)
+    st.markdown(f'<div class="status-strip">{strip}</div>',
+                unsafe_allow_html=True)
 
-    with ui.card("System status",
-                 hint="Read live from models/, data/ and reports/results/."):
-        s1, s2, s3 = st.columns(3)
-        with s1:
-            _render_models_status()
-        with s2:
-            _render_dataset_status()
-        with s3:
-            _render_evaluation_status()
+    if entries:
+        import pandas as pd
 
-    with ui.card("Recent activity",
-                 hint="Analyses from this browser session."):
-        _render_recent_activity()
+        with st.expander(f"This session: {len(entries)} runs"):
+            rows = ui.history_rows(entries)
+            st.dataframe(
+                pd.DataFrame(rows, columns=["When", "Input", "Key results"]),
+                hide_index=True, width="stretch")
 
-    with ui.card("About the numbers"):
-        ui.render_limitations(limitations())
+        link, clear, settings_col = st.columns([1, 1, 2])
+        with link:
+            stamp = datetime.now().strftime("%Y%m%d-%H%M")
+            ui.download_csv("Download history CSV", ui.export_csv(entries),
+                            f"crowdsense_history_{stamp}.csv",
+                            help="Full session history with raw result keys.")
+        with clear:
+            confirmed = st.checkbox("I understand this clears the session "
+                                    "history", key="activity_clear_confirm")
+            if st.button("Clear history", key="activity_clear_go",
+                         disabled=not confirmed) and confirmed:
+                state.clear_history()
+                st.rerun()
+        with settings_col:
+            s = state.settings()
+            st.caption(f"Settings: confidence ≥ {s['conf_threshold']:.2f} · "
+                       f"stride {s['frame_stride']}")
+        ui.data_note("Session-only — download the CSV to keep a copy.")
+
+    st.markdown("### About the numbers")
+    ui.render_limitations(limitations())

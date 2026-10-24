@@ -411,3 +411,23 @@ def test_streamlit_headless_smoke(project_root):
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+
+
+def test_status_items_reports_real_state():
+    from src.ui.page_overview import status_items
+
+    ok_probe = {"available": True, "sequences": 200}
+    ev = {"bundles": {"xgb": {}}, "n_test_windows": 48}
+    assert status_items(3, ok_probe, ev, 2) == [
+        ("ok", "3 model bundles ready"),
+        ("ok", "Dataset ready \u00b7 200 sequences"),
+        ("idle", "48 evaluation windows"),
+        ("idle", "2 runs this session"),
+    ]
+    assert status_items(0, {"available": False}, {}, 0) == [
+        ("warn", "No models yet"),
+        ("warn", "Dataset not found"),
+        ("idle", "No evaluation yet"),
+        ("idle", "No runs yet"),
+    ]
+    assert status_items(1, ok_probe, ev, 1)[0] == ("ok", "1 model bundle ready")
