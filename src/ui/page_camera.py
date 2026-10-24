@@ -474,9 +474,9 @@ def render() -> None:
     ui.page_header(
         title="Live Camera",
         description=(
-            "Rolling 30-frame window of density and movement features from "
-            "a webcam. Capture runs in small batches so Stop works between "
-            "batches; FPS and latency are measured, not estimated."),
+            "Watch a webcam in rolling windows of density and movement "
+            "features. FPS and latency are measured from the run, not "
+            "estimated."),
     )
 
     run = st.session_state.get("camera_run")

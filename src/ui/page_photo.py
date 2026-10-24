@@ -346,10 +346,9 @@ def render() -> None:
     ui.page_header(
         title="Photo Analysis",
         description=(
-            "Static analysis of one image: person detection, spatial "
-            "density and static features. Movement, speed, tracking and "
-            "anomaly scores require Video Analysis — a single frame has "
-            "no temporal context."),
+            "Detect people in one photo and see where the crowd is "
+            "densest. A single frame has no timeline — movement and "
+            "speed live in Video Analysis."),
     )
 
     nonce = int(st.session_state.get("photo_upload_nonce", 0))

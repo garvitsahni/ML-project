@@ -621,10 +621,10 @@ def render() -> None:
     ui.page_header(
         title="Video Analysis",
         description=(
-            "Sliding-window crowd analysis of an uploaded clip: person "
-            "detection, ByteTrack tracking, optical-flow movement and — "
-            "when a trained bundle exists — window-level anomaly scoring. "
-            "Processing is batched so Cancel works between batches."),
+            "Analyse a clip over time: people are detected and tracked "
+            "window by window, with density and movement charts. "
+            "Processing runs in batches, so Cancel takes effect between "
+            "them."),
     )
 
     st.session_state.setdefault("video_upload_nonce", 0)
