@@ -431,3 +431,12 @@ def test_status_items_reports_real_state():
         ("idle", "No runs yet"),
     ]
     assert status_items(1, ok_probe, ev, 1)[0] == ("ok", "1 model bundle ready")
+
+
+def test_photo_step_reflects_upload_and_result():
+    from src.ui.page_photo import photo_step
+
+    assert photo_step(False, False) == 1
+    assert photo_step(True, False) == 2
+    assert photo_step(True, True) == 3
+    assert photo_step(False, True) == 3   # result wins over stale upload flag

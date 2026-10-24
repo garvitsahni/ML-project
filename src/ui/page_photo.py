@@ -331,6 +331,17 @@ def _render_results(result: dict) -> None:
 # page entrypoint
 # --------------------------------------------------------------------------
 
+def photo_step(has_upload: bool, has_result: bool) -> int:
+    """Which step of the guided flow to show: 1 Upload, 2 Check, 3 Results.
+
+    A result always wins over a stale upload flag so the rail never says
+    "Check" while results are on screen.
+    """
+    if has_result:
+        return 3
+    return 2 if has_upload else 1
+
+
 def render() -> None:
     ui.page_header(
         title="Photo Analysis",
@@ -342,10 +353,24 @@ def render() -> None:
     )
 
     nonce = int(st.session_state.get("photo_upload_nonce", 0))
+    upload_key = f"photo_uploader_{nonce}"
+    uploaded_flag = st.session_state.get(upload_key) is not None
+    result = st.session_state.get("photo_result")
+    result_flag = False
+    if result is not None:
+        stored = result.get("fingerprint") or ()
+        current = st.session_state.get(upload_key)
+        # name + size are enough to trust the rail; the full fingerprint
+        # (incl. content hash) is re-checked in render below.
+        result_flag = (len(stored) >= 2 and current is not None
+                       and stored[0] == getattr(current, "name", None)
+                       and stored[1] == getattr(current, "size", None))
+    ui.step_rail(photo_step(uploaded_flag, result_flag), ui.STEP_LABELS)
+
     uploaded = st.file_uploader(
         "Image file",
         type=sorted(_ALLOWED_EXTS),
-        key=f"photo_uploader_{nonce}",
+        key=upload_key,
         help="Drag & drop or browse — JPG, JPEG, PNG, TIF, BMP, up to "
              f"{_MAX_UPLOAD_MB} MB.",
     )
