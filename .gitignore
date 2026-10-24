@@ -34,3 +34,4 @@ app_uploads/
 # Logs
 reports/results/*.log
 reports/results/*.err
+.superpowers/

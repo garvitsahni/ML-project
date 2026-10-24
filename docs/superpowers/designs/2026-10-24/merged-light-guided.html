@@ -1,0 +1,117 @@
+<style>
+  .vg-shell { display: flex; border-radius: 10px; overflow: hidden; font-size: 11px; line-height: 1.45; min-height: 220px; background: #fff; color: #1B2430; border: 1px solid #E4E9EF; }
+  .vg-nav { width: 100px; background: #F6F8FA; border-right: 1px solid #E2E8F0; padding: 12px 8px; flex: none; }
+  .vg-nav div { padding: 5px 9px; border-radius: 6px; color: #5B6675; font-size: 10px; margin-bottom: 3px; }
+  .vg-nav .on { background: #E6F5F3; color: #0F766E; font-weight: 700; }
+  .vg-main { flex: 1; padding: 15px 18px; min-width: 0; }
+  .vg-h { font-size: 15px; font-weight: 700; color: #0F172A; }
+  .vg-sub { color: #5B6675; font-size: 10px; margin-top: 2px; }
+  .vg-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 14px; }
+  .vg-tile { border: 1px solid #E4E9EF; border-radius: 9px; padding: 11px 11px 9px; background: #FBFCFD; }
+  .vg-tile svg { width: 19px; height: 19px; stroke: #0F766E; fill: none; stroke-width: 1.6; }
+  .vg-tile-l { font-weight: 700; font-size: 11.5px; color: #0F172A; margin-top: 6px; }
+  .vg-tile-d { color: #5B6675; font-size: 9.5px; margin-top: 1px; }
+  .vg-go { color: #0F766E; font-size: 9.5px; font-weight: 700; margin-top: 7px; }
+  .vg-lab { font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: #6B7686; font-weight: 700; margin: 12px 0 5px; display: flex; justify-content: space-between; }
+  .vg-act { color: #0F766E; letter-spacing: 0; text-transform: none; font-size: 9.5px; }
+  .vg-row { display: flex; justify-content: space-between; border: 1px solid #E4E9EF; border-bottom: none; padding: 6.5px 11px; font-size: 10.5px; }
+  .vg-row:last-child { border-bottom: 1px solid #E4E9EF; border-radius: 0; }
+  .vg-row:first-of-type { border-radius: 6px 6px 0 0; }
+  .vg-row .name { font-weight: 600; }
+  .vg-ok { color: #16A34A; font-weight: 700; font-size: 9.5px; }
+  .vg-mut { color: #5B6675; }
+  .vg-steps { display: flex; align-items: center; gap: 7px; margin: 12px 0 13px; }
+  .vg-step { display: flex; align-items: center; gap: 6px; }
+  .vg-num { width: 21px; height: 21px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: #E7EBF0; color: #7A8494; }
+  .vg-num.done { background: #0F766E; color: #fff; }
+  .vg-num.now { background: #0F766E; color: #fff; box-shadow: 0 0 0 3px #D3EDE9; }
+  .vg-step span { font-size: 10.5px; color: #5B6675; font-weight: 600; }
+  .vg-step.now span { color: #0F172A; }
+  .vg-arrow { color: #B6BEC9; font-size: 11px; }
+  .vg-drop { border: 1.6px dashed #C4CCD6; background: #FAFBFC; border-radius: 10px; padding: 26px 14px; text-align: center; }
+  .vg-drop b { font-size: 13px; display: block; color: #0F172A; }
+  .vg-drop small { color: #6B7686; font-size: 9.5px; }
+  .vg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 11px; }
+  .vg-next { color: #6B7686; font-size: 9.5px; }
+  .vg-btn { background: #0F766E; color: #fff; border-radius: 7px; padding: 7px 20px; font-size: 11px; font-weight: 700; }
+  .vg-frame { margin-bottom: 16px; }
+  .vg-cap { text-align: center; font-size: 10.5px; color: #8A94A3; margin-top: 7px; }
+  .vg-call { background: rgba(15,118,110,.08); border: 1px solid rgba(15,118,110,.25); border-radius: 8px; padding: 9px 13px; font-size: 11.5px; margin-top: 6px; }
+</style>
+
+<h2>The merge: B's look + C's flow</h2>
+<p class="subtitle">Light console styling everywhere, guided steps for the tasks. Click the card if this is the direction — or tell me what's off.</p>
+
+<div class="vg-frame">
+  <div class="mockup">
+    <div class="mockup-header">Overview — task choices first, console below</div>
+    <div class="mockup-body" style="padding:0">
+      <div class="vg-shell">
+        <div class="vg-nav"><div class="on">Overview</div><div>Photo</div><div>Video</div><div>Camera</div><div>Settings</div></div>
+        <div class="vg-main">
+          <div class="vg-h">What do you want to analyse?</div>
+          <div class="vg-sub">Pick a task — system status and recent runs are below.</div>
+          <div class="vg-tiles">
+            <div class="vg-tile">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>
+              <div class="vg-tile-l">Photo</div><div class="vg-tile-d">One image, quick count</div><div class="vg-go">Start →</div>
+            </div>
+            <div class="vg-tile">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg>
+              <div class="vg-tile-l">Video</div><div class="vg-tile-d">File, processed in steps</div><div class="vg-go">Start →</div>
+            </div>
+            <div class="vg-tile">
+              <svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg>
+              <div class="vg-tile-l">Camera</div><div class="vg-tile-d">Live from a device</div><div class="vg-go">Start →</div>
+            </div>
+          </div>
+          <div class="vg-lab">System status</div>
+          <div class="vg-row"><span class="name">Models</span><span><span class="vg-ok">● ready</span> <span class="vg-mut">3 bundles · newest xgb.joblib</span></span></div>
+          <div class="vg-row"><span class="name">Dataset</span><span><span class="vg-ok">● ready</span> <span class="vg-mut">UCSD v1p2 · 200 sequences</span></span></div>
+          <div class="vg-row"><span class="name">Evaluation</span><span class="vg-mut">48 held-out windows</span></div>
+          <div class="vg-lab">Recent activity <span class="vg-act">Download CSV · Clear</span></div>
+          <div class="vg-row"><span class="name">Video · clip.mp4</span><span class="vg-mut">3 windows · 40 frames · 12.3 s</span></div>
+          <div class="vg-row"><span class="name">Photo · uploaded</span><span class="vg-mut">5 persons · 0.8 s</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="vg-cap">White, labeled rows, one dark-teal accent. The eyebrow, pills and equal-cards are gone.</p>
+</div>
+
+<div class="vg-frame">
+  <div class="mockup">
+    <div class="mockup-header">Photo analysis — guided steps in the same light skin</div>
+    <div class="mockup-body" style="padding:0">
+      <div class="vg-shell">
+        <div class="vg-nav"><div>Overview</div><div class="on">Photo</div><div>Video</div><div>Camera</div><div>Settings</div></div>
+        <div class="vg-main">
+          <div class="vg-h">Analyse a photo</div>
+          <div class="vg-sub">Three steps — upload, check, results.</div>
+          <div class="vg-steps">
+            <div class="vg-step now"><div class="vg-num now">1</div><span>Upload</span></div>
+            <div class="vg-arrow">→</div>
+            <div class="vg-step"><div class="vg-num">2</div><span>Check</span></div>
+            <div class="vg-arrow">→</div>
+            <div class="vg-step"><div class="vg-num">3</div><span>Results</span></div>
+          </div>
+          <div class="vg-drop"><b>Drop a photo here</b><small>or click to browse — JPG or PNG, up to 10 MB</small></div>
+          <div class="vg-foot">
+            <span class="vg-next">Step 2 shows your settings before analysing.</span>
+            <span class="vg-btn">Continue</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="vg-cap">Same numbered path, now wearing the console skin — step dots use the teal accent.</p>
+</div>
+
+<div class="cards">
+  <div class="card" data-choice="merge" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>This is the direction</h3>
+      <p>Light console look across all five pages, guided steps for photo/video, plain-language copy throughout. Click to confirm — then I'll write it up as the design to build from.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<style>
+  .v2-shell { display: flex; border-radius: 10px; overflow: hidden; font-size: 11px; line-height: 1.45; min-height: 200px; background: #fff; color: #1B2430; border: 1px solid #E4E9EF; }
+  .v2-nav { width: 96px; background: #F6F8FA; border-right: 1px solid #E2E8F0; padding: 12px 8px; flex: none; }
+  .v2-nav div { padding: 5px 9px; border-radius: 6px; color: #5B6675; font-size: 10px; margin-bottom: 3px; }
+  .v2-nav .on { background: #E6F5F3; color: #0F766E; font-weight: 700; }
+  .v2-main { flex: 1; padding: 15px 18px; min-width: 0; }
+  .v2-h { font-size: 15.5px; font-weight: 700; color: #0F172A; }
+  .v2-sub { color: #5B6675; font-size: 10px; margin-top: 2px; }
+  .v2-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 11px 0 12px; }
+  .v2-tile { border: 1px solid #E4E9EF; border-radius: 9px; padding: 11px; background: #FBFCFD; }
+  .v2-tile svg { width: 19px; height: 19px; stroke: #0F766E; fill: none; stroke-width: 1.6; }
+  .v2-tile-l { font-weight: 700; font-size: 11.5px; color: #0F172A; margin-top: 6px; }
+  .v2-tile-d { color: #5B6675; font-size: 9.5px; margin-top: 1px; }
+  .v2-go { color: #0F766E; font-size: 9.5px; font-weight: 700; margin-top: 7px; }
+  .v2-strip { border: 1px solid #E4E9EF; background: #FAFBFC; border-radius: 8px; padding: 8px 12px; font-size: 10px; color: #5B6675; display: flex; gap: 14px; flex-wrap: wrap; }
+  .v2-ok { color: #16A34A; font-weight: 700; }
+  .v2-links { margin-top: 9px; font-size: 9.5px; color: #6B7686; display: flex; gap: 14px; }
+  .v2-links b { color: #0F766E; font-weight: 700; }
+  .v2-frame { margin-bottom: 16px; }
+  .v2-cap { text-align: center; font-size: 10.5px; color: #8A94A3; margin-top: 7px; }
+  .v2-row { display: flex; justify-content: space-between; border: 1px solid #E4E9EF; border-bottom: none; padding: 6.5px 11px; font-size: 10.5px; }
+  .v2-row:last-child { border-bottom: 1px solid #E4E9EF; }
+  .v2-row .name { font-weight: 600; }
+  .v2-mut { color: #5B6675; }
+  .v2-lab { font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: #6B7686; font-weight: 700; margin: 11px 0 5px; display: flex; justify-content: space-between; }
+  .v2-act { color: #0F766E; letter-spacing: 0; text-transform: none; font-size: 9.5px; }
+</style>
+
+<h2>Overview, restyled like the step page</h2>
+<p class="subtitle">Same information — but the console rows shrink to one quiet line, and the task choices lead. Which one do you want to ship?</p>
+
+<div class="v2-frame">
+  <div class="mockup">
+    <div class="mockup-header">Just now (v1) — status as rows</div>
+    <div class="mockup-body" style="padding:0">
+      <div class="v2-shell">
+        <div class="v2-nav"><div class="on">Overview</div><div>Photo</div><div>Video</div><div>Camera</div><div>Settings</div></div>
+        <div class="v2-main">
+          <div class="v2-h">What do you want to analyse?</div>
+          <div class="v2-sub">Pick a task — system status and recent runs are below.</div>
+          <div class="v2-tiles">
+            <div class="v2-tile"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg><div class="v2-tile-l">Photo</div><div class="v2-tile-d">One image, quick count</div><div class="v2-go">Start →</div></div>
+            <div class="v2-tile"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg><div class="v2-tile-l">Video</div><div class="v2-tile-d">File, processed in steps</div><div class="v2-go">Start →</div></div>
+            <div class="v2-tile"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg><div class="v2-tile-l">Camera</div><div class="v2-tile-d">Live from a device</div><div class="v2-go">Start →</div></div>
+          </div>
+          <div class="v2-lab">System status</div>
+          <div class="v2-row"><span class="name">Models</span><span><span class="v2-mut">● ready · 3 bundles · newest xgb.joblib</span></span></div>
+          <div class="v2-row"><span class="name">Dataset</span><span class="v2-mut">● ready · UCSD v1p2 · 200 sequences</span></div>
+          <div class="v2-row"><span class="name">Evaluation</span><span class="v2-mut">48 held-out windows</span></div>
+          <div class="v2-lab">Recent activity <span class="v2-act">Download CSV · Clear</span></div>
+          <div class="v2-row"><span class="name">Video · clip.mp4</span><span class="v2-mut">3 windows · 40 frames · 12.3 s</span></div>
+          <div class="v2-row"><span class="name">Photo · uploaded</span><span class="v2-mut">5 persons · 0.8 s</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="v2-frame">
+  <div class="mockup">
+    <div class="mockup-header">v2 — same calm feel as the step page</div>
+    <div class="mockup-body" style="padding:0">
+      <div class="v2-shell">
+        <div class="v2-nav"><div class="on">Overview</div><div>Photo</div><div>Video</div><div>Camera</div><div>Settings</div></div>
+        <div class="v2-main">
+          <div class="v2-h">What do you want to analyse?</div>
+          <div class="v2-sub">Pick a task — everything takes about a minute.</div>
+          <div class="v2-tiles">
+            <div class="v2-tile"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg><div class="v2-tile-l">Photo</div><div class="v2-tile-d">One image, quick count</div><div class="v2-go">Start →</div></div>
+            <div class="v2-tile"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg><div class="v2-tile-l">Video</div><div class="v2-tile-d">File, processed in steps</div><div class="v2-go">Start →</div></div>
+            <div class="v2-tile"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg><div class="v2-tile-l">Camera</div><div class="v2-tile-d">Live from a device</div><div class="v2-go">Start →</div></div>
+          </div>
+          <div class="v2-strip">
+            <span><span class="v2-ok">●</span> Models ready</span>
+            <span><span class="v2-ok">●</span> Dataset ready</span>
+            <span>48 evaluation windows</span>
+            <span>2 runs this session</span>
+          </div>
+          <div class="v2-links"><span><b>Download history CSV</b></span><span><b>Clear history</b></span><span>Settings: confidence ≥ 0.25 · stride 1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="v2-cap">Status collapses to one quiet line; history actions become small links — nothing shouts.</p>
+</div>
+
+<div class="cards">
+  <div class="card" data-choice="v2" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>Ship v2</h3>
+      <p>Quiet status line, links instead of buttons, tasks lead the page.</p>
+    </div>
+  </div>
+  <div class="card" data-choice="v1" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>Keep v1</h3>
+      <p>Status rows and labeled tables stay — the denser console version.</p>
+    </div>
+  </div>
+</div>

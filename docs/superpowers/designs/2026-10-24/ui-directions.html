@@ -1,0 +1,174 @@
+<style>
+  .vc-note { margin: 6px 0 14px; }
+  .vc-ref { max-width: 760px; margin: 0 auto 6px; }
+  .vc-shell { display: flex; border-radius: 10px; overflow: hidden; font-size: 11px; line-height: 1.45; min-height: 210px; }
+  .vc-rail { width: 44px; padding: 12px 0; display: flex; flex-direction: column; gap: 10px; align-items: center; flex: none; }
+  .vc-dot { width: 14px; height: 14px; border-radius: 4px; opacity: .55; }
+  .vc-main { flex: 1; padding: 16px 18px; min-width: 0; }
+  .vc-dark { background: #0B1220; color: #DCE6F2; }
+  .vc-dark .vc-rail { background: #070C16; }
+  .vc-eyebrow { font-size: 8px; letter-spacing: .22em; color: #2DD4BF; font-weight: 700; }
+  .vc-h { font-size: 17px; font-weight: 700; margin: 2px 0 10px; color: #fff; }
+  .vc-btns { display: flex; gap: 6px; margin-bottom: 12px; }
+  .vc-btn-p { background: #2DD4BF; color: #06222B; padding: 5px 12px; border-radius: 6px; font-weight: 700; font-size: 10px; }
+  .vc-btn-o { border: 1px solid #2A3A52; color: #C7D4E5; padding: 5px 12px; border-radius: 6px; font-size: 10px; }
+  .vc-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .vc-card { background: #101A2C; border: 1px solid #1E2C44; border-radius: 8px; padding: 9px 10px; }
+  .vc-t { font-weight: 700; font-size: 10px; color: #EAF1FA; }
+  .vc-sub { color: #7E93B0; font-size: 9px; }
+  .vc-pill { display: inline-block; margin-top: 6px; background: rgba(45,212,191,.14); color: #2DD4BF; border: 1px solid rgba(45,212,191,.4); border-radius: 99px; font-size: 8px; padding: 1px 7px; font-weight: 700; }
+  .vc-cap { margin-top: 10px; color: #617592; font-size: 9px; }
+  .vc-q { font-size: 15px; font-weight: 700; color: #F2F6FC; margin-bottom: 3px; }
+  .vc-hint { color: #7E93B0; font-size: 10px; margin-bottom: 12px; }
+  .vc-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .vc-tile { background: #111B2D; border: 1px solid #223047; border-radius: 10px; padding: 13px 10px; text-align: center; }
+  .vc-tile svg { width: 22px; height: 22px; stroke: #9FB2CB; fill: none; stroke-width: 1.6; }
+  .vc-tile-l { font-weight: 700; font-size: 11px; color: #EAF1FA; margin-top: 7px; }
+  .vc-tile-d { color: #7E93B0; font-size: 9px; margin-top: 2px; }
+  .vc-strip { margin-top: 12px; background: #0E1727; border: 1px solid #1C2941; border-radius: 8px; padding: 8px 11px; color: #8FA3BF; font-size: 9.5px; }
+  .vc-gd { color: #4ADE80; }
+  .vc-light { background: #FFFFFF; color: #1B2430; }
+  .vc-lnav { width: 96px; background: #F6F8FA; border-right: 1px solid #E2E8F0; padding: 12px 8px; flex: none; }
+  .vc-lnav div { padding: 5px 8px; border-radius: 6px; color: #5B6675; font-size: 10px; margin-bottom: 3px; }
+  .vc-lnav .on { background: #E6F5F3; color: #0F766E; font-weight: 700; }
+  .vc-lmain { flex: 1; padding: 14px 16px; min-width: 0; }
+  .vc-lhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .vc-lh { font-size: 15px; font-weight: 700; color: #0F172A; }
+  .vc-lbtn { background: #0D9488; color: #fff; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 6px; }
+  .vc-lab { font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: #6B7686; font-weight: 700; margin: 10px 0 4px; }
+  .vc-row { display: flex; justify-content: space-between; border: 1px solid #E4E9EF; border-bottom: none; padding: 6px 10px; font-size: 10px; }
+  .vc-row:first-of-type { border-radius: 6px 6px 0 0; }
+  .vc-row:last-of-type { border-bottom: 1px solid #E4E9EF; border-radius: 0 0 6px 6px; }
+  .vc-row b { font-weight: 600; }
+  .vc-ok { color: #16A34A; font-weight: 700; font-size: 9.5px; }
+  .vc-mut { color: #5B6675; }
+  .vc-cream { background: #FFFDF6; color: #26303E; }
+  .vc-steps { display: flex; align-items: center; gap: 6px; margin: 4px 0 14px; }
+  .vc-step { display: flex; align-items: center; gap: 6px; }
+  .vc-num { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: #E8E5DA; color: #8A8676; }
+  .vc-num.done { background: #16A34A; color: #fff; }
+  .vc-num.now { background: #4F46E5; color: #fff; }
+  .vc-step span { font-size: 10px; color: #5B6472; font-weight: 600; }
+  .vc-step.now span { color: #26303E; }
+  .vc-arrow { color: #C4BFB0; font-size: 11px; }
+  .vc-drop { border: 1.6px dashed #B9B3A2; background: #FFF9EC; border-radius: 12px; padding: 26px 14px; text-align: center; }
+  .vc-drop b { font-size: 13px; display: block; }
+  .vc-drop small { color: #6B7280; font-size: 9.5px; }
+  .vc-go { margin-top: 10px; background: #4F46E5; color: #fff; border-radius: 8px; padding: 7px 0; font-size: 11px; font-weight: 700; }
+  .vc-mock { margin-bottom: 14px; }
+  .vc-cap2 { text-align: center; font-size: 10.5px; color: #8A94A3; margin-top: 6px; }
+</style>
+
+<h2>What would "more user friendly" look like?</h2>
+<p class="subtitle">Same app, same data — three directions. You can select more than one, or tell me in chat what to mix.</p>
+
+<div class="section vc-ref">
+  <div class="label">Right now — what you saw</div>
+  <div class="mockup vc-mock">
+    <div class="mockup-header">Current: dark shell, teal accent, everything is a card</div>
+    <div class="mockup-body" style="padding:0">
+      <div class="vc-shell vc-dark">
+        <div class="vc-rail">
+          <div class="vc-dot" style="background:#2DD4BF;opacity:1"></div>
+          <div class="vc-dot" style="background:#7E93B0"></div>
+          <div class="vc-dot" style="background:#7E93B0"></div>
+        </div>
+        <div class="vc-main">
+          <div class="vc-eyebrow">CROWD ANALYTICS</div>
+          <div class="vc-h">CrowdSense AI</div>
+          <div class="vc-btns"><span class="vc-btn-p">Analyse photo</span><span class="vc-btn-o">Analyse video</span><span class="vc-btn-o">Start camera</span></div>
+          <div class="vc-cards">
+            <div class="vc-card"><div class="vc-t">Models</div><div class="vc-sub">Newest: xgb.joblib</div><span class="vc-pill">3 bundles</span></div>
+            <div class="vc-card"><div class="vc-t">Dataset</div><div class="vc-sub">UCSD v1p2</div><span class="vc-pill">ready</span></div>
+            <div class="vc-card"><div class="vc-t">Evaluation</div><div class="vc-sub">48 windows</div><span class="vc-pill">ok</span></div>
+          </div>
+          <div class="vc-cap">Session-only history — not persisted to disk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="vc-note vc-cap2">Small caps eyebrow, neon pills, equal cards — the house style of AI dashboards.</p>
+</div>
+
+<h3>Three directions</h3>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="vc-shell vc-dark">
+        <div class="vc-rail"><div class="vc-dot" style="background:#2DD4BF;opacity:1"></div><div class="vc-dot" style="background:#7E93B0"></div></div>
+        <div class="vc-main">
+          <div class="vc-q">What do you want to analyse?</div>
+          <div class="vc-hint">Pick one — everything else is below.</div>
+          <div class="vc-tiles">
+            <div class="vc-tile">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>
+              <div class="vc-tile-l">Photo</div><div class="vc-tile-d">One image, quick count</div>
+            </div>
+            <div class="vc-tile">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg>
+              <div class="vc-tile-l">Video</div><div class="vc-tile-d">File, processed in steps</div>
+            </div>
+            <div class="vc-tile">
+              <svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg>
+              <div class="vc-tile-l">Camera</div><div class="vc-tile-d">Live from a device</div>
+            </div>
+          </div>
+          <div class="vc-strip"><span class="vc-gd">●</span> Models ready &nbsp;·&nbsp; <span class="vc-gd">●</span> Dataset ready &nbsp;·&nbsp; <span class="vc-gd">●</span> Evaluation 48 windows &nbsp;·&nbsp; 2 runs this session</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Action first</h3>
+      <p>Opens with one plain question and three big choices; status shrinks to a single quiet line. Dark stays, the noise goes. Least scary for occasional users.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="vc-shell vc-light">
+        <div class="vc-lnav">
+          <div class="on">Overview</div><div>Photo</div><div>Video</div><div>Camera</div><div>Settings</div>
+        </div>
+        <div class="vc-lmain">
+          <div class="vc-lhead"><div class="vc-lh">Overview</div><span class="vc-lbtn">Analyse photo</span></div>
+          <div class="vc-lab">System status</div>
+          <div class="vc-row"><b>Models</b><span><span class="vc-ok">● ready</span> <span class="vc-mut">3 bundles</span></span></div>
+          <div class="vc-row"><b>Dataset</b><span><span class="vc-ok">● ready</span> <span class="vc-mut">UCSD v1p2</span></span></div>
+          <div class="vc-row"><b>Evaluation</b><span><span class="vc-mut">48 held-out windows</span></span></div>
+          <div class="vc-lab">Recent activity</div>
+          <div class="vc-row"><b>Video · clip.mp4</b><span class="vc-mut">3 windows · 12.3 s</span></div>
+          <div class="vc-row"><b>Photo · uploaded</b><span class="vc-mut">5 persons · 0.8 s</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Light console</h3>
+      <p>White background, labeled rows, one accent color used only for the main button. Reads like a professional tool — calm, high contrast, nothing hiding behind pills.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="vc-shell vc-cream">
+        <div class="vc-main">
+          <div class="vc-q" style="color:#26303E">Analyse a photo</div>
+          <div class="vc-hint" style="color:#6B7280">Three steps — you can't get lost.</div>
+          <div class="vc-steps">
+            <div class="vc-step"><div class="vc-num done">✓</div><span>Upload</span></div>
+            <div class="vc-arrow">→</div>
+            <div class="vc-step now"><div class="vc-num now">2</div><span>Check</span></div>
+            <div class="vc-arrow">→</div>
+            <div class="vc-step"><div class="vc-num">3</div><span>Results</span></div>
+          </div>
+          <div class="vc-drop"><b>Drop a photo here</b><small>or click to browse — JPG or PNG</small></div>
+          <div class="vc-go">Continue</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · Guided steps</h3>
+      <p>Each task is a short numbered path: upload → check settings → results. Warm, plain language, big targets. Friendliest for first-time or non-technical users.</p>
+    </div>
+  </div>
+</div>
