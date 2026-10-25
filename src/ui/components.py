@@ -9,13 +9,35 @@ label, never by color alone.
 from __future__ import annotations
 
 import html
+import re
 from contextlib import contextmanager
 from typing import Callable, Iterator, Sequence
 
 import streamlit as st
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 _PILL_KINDS = ("ok", "warn", "error", "info", "idle")
 _DASH = "—"
+
+# Card keys are what emit the `st-key-*` CSS class on the bordered container.
+# They must be stable across reruns (a changing key remounts the card's DOM
+# node and drops e.g. expander state) yet unique within a run (Streamlit
+# raises StreamlitDuplicateElementKey otherwise), so they are derived from the
+# title plus a counter that resets whenever the script run changes.
+_CARD_SEQ: dict[str, int] = {}
+_CARD_RUN: list[str | None] = [None]
+
+
+def _next_card_key(title: str | None) -> str:
+    """Return a per-run unique, cross-run stable key for one card."""
+    run_id = getattr(get_script_run_ctx(), "script_run_id", None)
+    if run_id != _CARD_RUN[0]:
+        _CARD_RUN[0] = run_id
+        _CARD_SEQ.clear()
+    slug = re.sub(r"[^a-z0-9]+", "-", (title or "card").lower()).strip("-") or "card"
+    seen = _CARD_SEQ.get(slug, 0)
+    _CARD_SEQ[slug] = seen + 1
+    return f"card-{slug}-{seen}"
 
 
 # --------------------------------------------------------------------------
@@ -115,7 +137,7 @@ def step_rail(current: int, labels: Sequence[str] = STEP_LABELS) -> None:
 @contextmanager
 def card(title: str | None = None, hint: str | None = None) -> Iterator[None]:
     """A bordered surface for one logical section of a page."""
-    with st.container(border=True):
+    with st.container(border=True, key=_next_card_key(title)):
         if title is not None:
             st.markdown(f'<p class="card-title">{html.escape(title)}</p>',
                         unsafe_allow_html=True)

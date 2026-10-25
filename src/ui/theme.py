@@ -35,10 +35,13 @@ TOKENS: dict = {
     "danger": "#DC2626",
     "info": "#60A5FA",
     # scales
-    "radii": {"sm": "6px", "md": "8px", "lg": "10px"},
+    "radii": {"sm": "8px", "md": "10px", "lg": "14px"},
     "space": {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px"},
     "max_content": "1280px",
     "font_sans": '"Segoe UI", system-ui, -apple-system, sans-serif',
+    # soft depth — one quiet shadow instead of hard outlines
+    "shadow": ("0 1px 2px rgba(15, 23, 42, 0.04), "
+               "0 8px 24px rgba(15, 23, 42, 0.05)"),
 }
 
 
@@ -59,12 +62,12 @@ def _root_block() -> str:
 
 _RULES = """
 /* ---------- page header ---------- */
-.page-header { margin: 0 0 1.1rem; }
+.page-header { margin: 0 0 1.4rem; }
 .page-header h1 {
   font-size: 1.4rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.25;
+  line-height: 1.3;
   margin: 0;
   color: var(--heading);
 }
@@ -72,7 +75,7 @@ _RULES = """
   margin: 0.4rem 0 0;
   max-width: 78ch;
   font-size: 0.92rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-muted);
 }
 
@@ -80,7 +83,7 @@ _RULES = """
 .card-title {
   margin: 0 0 0.35rem;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--heading);
 }
 .card-hint { margin: -0.2rem 0 0.6rem; font-size: 0.8rem; color: var(--text-muted); }
@@ -120,8 +123,9 @@ _RULES = """
   gap: 0.35rem 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.7rem 1.1rem;
 }
 
 /* ---------- step rail (guided flows) ---------- */
@@ -129,9 +133,9 @@ _RULES = """
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 1.6rem;
+  gap: 0.4rem 2rem;
   list-style: none;
-  margin: 0 0 1.1rem;
+  margin: 0 0 1.3rem;
   padding: 0;
 }
 .step {
@@ -139,7 +143,8 @@ _RULES = """
   align-items: center;
   gap: 0.5rem;
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  transition: color .15s ease;
 }
 .step__num {
   display: inline-flex;
@@ -170,9 +175,10 @@ _RULES = """
 
 /* ---------- empty / error states ---------- */
 .state-block {
-  padding: 2rem 1.25rem;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
+  padding: 2.5rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
   background: var(--surface);
   text-align: center;
 }
@@ -183,9 +189,10 @@ _RULES = """
 
 /* ---------- metric tiles ---------- */
 [data-testid="stMetric"] {
-  padding: 0.75rem 0.9rem;
+  padding: 0.9rem 1rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
   background: var(--surface-2);
 }
 [data-testid="stMetricLabel"] { font-size: 0.78rem; color: var(--text-muted); }
@@ -211,12 +218,55 @@ _RULES = """
 .crowdsense-brand { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.1rem; }
 .crowdsense-mark {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 1.7rem; height: 1.7rem; border-radius: 7px;
+  width: 1.7rem; height: 1.7rem; border-radius: var(--radius-md);
   background: var(--accent);
   color: #FFFFFF; font-weight: 800; font-size: 0.95rem; flex: none;
 }
 .crowdsense-name { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; color: var(--heading); }
 .crowdsense-sub { font-size: 0.74rem; color: var(--text-muted); }
+
+/* ---------- soft surfaces (smoothing pass) ---------- */
+/* Keyed cards + tiles: quiet depth instead of a hard outline. The key lands
+   as `st-key-card-*` / `st-key-tile-*` on the bordered block itself. */
+[data-testid="stVerticalBlock"][class*="st-key-card"],
+[data-testid="stVerticalBlock"][class*="st-key-tile"] {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+[data-testid="stExpander"] {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+/* Upload dropzone: a soft, welcoming target. */
+[data-testid="stFileUploaderDropzone"] {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition: border-color .15s ease, background-color .15s ease;
+}
+[data-testid="stFileUploaderDropzone"]:hover {
+  background: var(--surface-2);
+}
+/* Buttons: gentle motion, no layout jump. */
+[data-testid^="stBaseButton"] {
+  border-radius: var(--radius-md);
+  transition: background-color .15s ease, border-color .15s ease,
+              box-shadow .15s ease, transform .1s ease;
+}
+[data-testid^="stBaseButton"]:hover {
+  box-shadow: var(--shadow);
+}
+[data-testid^="stBaseButton"]:active {
+  transform: translateY(1px);
+}
+/* Sidebar nav: rounded pills with a soft active state. */
+[data-testid="stSidebarNavLink"] {
+  border-radius: var(--radius-md);
+  transition: background-color .15s ease, color .15s ease;
+}
+[data-testid="stSidebarNavLink"][aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
 
 /* ---------- misc restraint ---------- */
 h1, h2, h3 { letter-spacing: -0.01em; color: var(--heading); }

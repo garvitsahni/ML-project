@@ -98,7 +98,7 @@ def render() -> None:
     cols = st.columns(3)
     for col, (name, desc, icon, key, page) in zip(cols, tiles):
         with col:
-            with st.container(border=True):
+            with st.container(border=True, key=f"{key}-box"):
                 st.markdown(
                     f'<div class="tile">{_ICONS[icon]} '
                     f'<strong>{name}</strong>'

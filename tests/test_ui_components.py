@@ -289,3 +289,52 @@ def test_theme_css_drops_all_legacy_dark_hexes():
     )
     for hexval in legacy_dark:
         assert hexval not in theme.CSS, f"dark leftover in CSS: {hexval}"
+
+
+def test_theme_geometry_is_soft():
+    """Softer radii + a real shadow token (smoother, friendlier surfaces)."""
+    from src.ui import theme
+
+    assert theme.TOKENS["radii"] == {"sm": "8px", "md": "10px", "lg": "14px"}
+    assert "shadow" in theme.TOKENS
+    assert "--shadow:" in theme.CSS
+    assert "var(--shadow)" in theme.CSS
+
+
+def test_css_targets_soft_surfaces():
+    """The key surfaces the smoothing pass must reach must be selectable."""
+    from src.ui import theme
+
+    for sel in ("st-key-card", "st-key-tile", "stSidebarNavLink",
+                "stBaseButton", "stFileUploaderDropzone", "stExpander"):
+        assert sel in theme.CSS, f"missing soft-surface selector: {sel}"
+
+
+def test_config_rounds_softly():
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / ".streamlit"
+            / "config.toml").read_text(encoding="utf-8")
+    assert 'baseRadius = "14"' in text
+    assert 'buttonRadius = "10"' in text
+
+
+def test_card_gives_each_container_a_key():
+    """Keys are what emit the st-key-* CSS class on the bordered box."""
+    import inspect
+
+    from src.ui import components
+
+    assert "key=" in inspect.getsource(components.card)
+
+
+def test_card_renders_multiple_instances_without_key_collision():
+    from streamlit.testing.v1 import AppTest
+
+    src = ("import streamlit as st\n"
+           "from src.ui import components\n"
+           'with components.card("One"):\n    st.write("a")\n'
+           'with components.card("Two"):\n    st.write("b")\n')
+    at = AppTest.from_string(src, default_timeout=60).run()
+    assert not at.exception
+    assert len(at.error) == 0
