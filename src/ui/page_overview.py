@@ -59,13 +59,16 @@ def status_items(model_count: int, probe: dict, evaluation: dict,
         models = ("warn", "No models yet")
 
     if probe.get("available"):
-        dataset = ("ok", f"Dataset ready · {probe['sequences']} sequences")
+        sequences = probe["sequences"]
+        seq_noun = "sequence" if sequences == 1 else "sequences"
+        dataset = ("ok", f"Dataset ready · {sequences} {seq_noun}")
     else:
         dataset = ("warn", "Dataset not found")
 
     if evaluation.get("bundles"):
         windows = evaluation.get("n_test_windows", 0)
-        evaluation_item = ("idle", f"{windows} evaluation windows")
+        win_noun = "evaluation window" if windows == 1 else "evaluation windows"
+        evaluation_item = ("idle", f"{windows} {win_noun}")
     else:
         evaluation_item = ("idle", "No evaluation yet")
 

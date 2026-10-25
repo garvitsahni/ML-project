@@ -265,3 +265,27 @@ def test_steps_html_marks_done_now_and_pending():
     assert clamped.count("is-now") == 1 and clamped.endswith("</ol>")
     escaped = components.steps_html(1, ("<b>",))
     assert "<b>" not in escaped and "&lt;b&gt;" in escaped
+
+
+def test_every_css_var_has_a_definition():
+    """A var() with no --x: definition silently drops the whole declaration."""
+    import re
+
+    from src.ui import theme
+
+    used = set(re.findall(r"var\(--([a-z0-9-]+)", theme.CSS))
+    defined = set(re.findall(r"--([a-z0-9-]+):\s", theme.CSS))
+    missing = used - defined
+    assert not missing, f"undefined CSS variables: {sorted(missing)}"
+
+
+def test_theme_css_drops_all_legacy_dark_hexes():
+    from src.ui import theme
+
+    legacy_dark = (
+        "#0B1220", "#111A2B", "#162136", "#0D1422", "#1F2A3E",
+        "#2DD4BF", "#14B8A6", "#E6EDF3", "#8B98AC", "#34D399",
+        "#F87171", "#06202B", "#0E1626",
+    )
+    for hexval in legacy_dark:
+        assert hexval not in theme.CSS, f"dark leftover in CSS: {hexval}"

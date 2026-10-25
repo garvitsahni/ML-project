@@ -462,3 +462,27 @@ def test_video_config_keeps_editable_controls():
     assert src.count("st.slider(") >= 2       # stride + max frames stay editable
     assert "st.toggle(" in src                # annotated-export toggle stays
     assert "Process video" in src
+
+
+def test_status_items_singular_counts():
+    from src.ui.page_overview import status_items
+
+    probe = {"available": True, "sequences": 1}
+    ev = {"bundles": {"xgb": {}}, "n_test_windows": 1}
+    items = status_items(1, probe, ev, 1)
+    assert items[1] == ("ok", "Dataset ready \u00b7 1 sequence")
+    assert items[2] == ("idle", "1 evaluation window")
+
+
+def test_video_rail_phase_requires_matching_input():
+    """Rail must not report Results while the stored run belongs to another file."""
+    from src.ui.page_video import video_rail_phase
+
+    meta = {"name": "a.mp4", "size": 100, "hash": "x"}
+    # stored run matches the file on screen -> phase trusted
+    assert video_rail_phase(meta, "done", "a.mp4", 100) == "done"
+    # user picked a different clip -> phase is discarded, rail cannot say Results
+    assert video_rail_phase(meta, "done", "b.mp4", 100) is None
+    assert video_rail_phase(meta, "done", "a.mp4", 999) is None
+    assert video_rail_phase(None, "done", "a.mp4", 100) is None
+    assert video_rail_phase(meta, "done", None, None) is None

@@ -359,8 +359,9 @@ def render() -> None:
     if result is not None:
         stored = result.get("fingerprint") or ()
         current = st.session_state.get(upload_key)
-        # name + size are enough to trust the rail; the full fingerprint
-        # (incl. content hash) is re-checked in render below.
+        # name + size keep the rail honest across file swaps; the full
+        # fingerprint (incl. content hash) is re-checked in render below
+        # and can still discard a same-name/same-size result there.
         result_flag = (len(stored) >= 2 and current is not None
                        and stored[0] == getattr(current, "name", None)
                        and stored[1] == getattr(current, "size", None))

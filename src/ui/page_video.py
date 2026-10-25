@@ -606,6 +606,21 @@ def _render_cancelled(run: dict) -> None:
 # page entrypoint
 # --------------------------------------------------------------------------
 
+def video_rail_phase(meta: dict | None, run_phase: str | None, name, size):
+    """The run phase the rail may trust — or None.
+
+    The stored run belongs to `meta`'s file; the uploader may already show
+    a different clip (its name/size disagree) while `video_run` still holds
+    the previous result. Reporting that phase would make the rail claim
+    "Results" over the step-2 panel, so the mismatch returns None.
+    """
+    if meta is None or name is None:
+        return None
+    if meta.get("name") == name and meta.get("size") == size:
+        return run_phase
+    return None
+
+
 def video_step(has_upload: bool, phase: str | None) -> int:
     """Which step of the guided flow to show: 1 Upload, 2 Check, 3 Results.
 
@@ -630,8 +645,14 @@ def render() -> None:
     st.session_state.setdefault("video_upload_nonce", 0)
     nonce = int(st.session_state["video_upload_nonce"])
     upload_key = f"video_uploader_{nonce}"
-    uploaded_flag = st.session_state.get(upload_key) is not None
-    phase = (st.session_state.get("video_run") or {}).get("phase")
+    current = st.session_state.get(upload_key)
+    uploaded_flag = current is not None
+    phase = video_rail_phase(
+        st.session_state.get("video_meta"),
+        (st.session_state.get("video_run") or {}).get("phase"),
+        getattr(current, "name", None),
+        getattr(current, "size", None),
+    )
     ui.step_rail(video_step(uploaded_flag, phase), ui.STEP_LABELS)
 
     uploaded = st.file_uploader(

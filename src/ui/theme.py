@@ -48,6 +48,10 @@ def _root_block() -> str:
         if isinstance(value, dict):
             for sub, subval in value.items():
                 lines.append(f"  --{key.replace('_', '-')}-{sub}: {subval};")
+                # `_RULES` references the radii scale as --radius-*; emit the
+                # alias here so no rule silently loses its declaration.
+                if key == "radii":
+                    lines.append(f"  --radius-{sub}: {subval};")
         else:
             lines.append(f"  --{key.replace('_', '-')}: {value};")
     return ":root {\n" + "\n".join(lines) + "\n}"
