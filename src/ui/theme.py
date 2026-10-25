@@ -37,8 +37,8 @@ TOKENS: dict = {
     # scales
     "radii": {"sm": "8px", "md": "10px", "lg": "14px"},
     "space": {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px"},
-    "max_content": "1280px",
-    "font_sans": '"Segoe UI", system-ui, -apple-system, sans-serif',
+    "max_content": "1440px",
+    "font_sans": '"Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif',
     # soft depth — one quiet shadow instead of hard outlines
     "shadow": ("0 1px 2px rgba(15, 23, 42, 0.04), "
                "0 8px 24px rgba(15, 23, 42, 0.05)"),
@@ -202,10 +202,22 @@ _RULES = """
 [data-testid="dataframe"] { border-radius: var(--radius-sm); }
 [data-testid="stDataFrame"] { border-radius: var(--radius-sm); }
 
-/* ---------- content width cap (readability on wide screens) ---------- */
+/* ---------- fit to frame ---------- */
 [data-testid="stMainBlockContainer"] {
   max-width: var(--max-content);
   margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2.75rem);
+  padding-block: 1.5rem 3rem;
+}
+/* nothing may spill past the frame edge */
+html, body { overflow-x: hidden; overflow-x: clip; }
+/* media embeds stay inside their column */
+.stApp img, .stApp video,
+[data-testid="stDataFrame"], [data-testid="stTable"] { max-width: 100%; }
+/* our authored surfaces use the same family as the app theme */
+.page-header, .page-desc, .card-title, .card-hint, .status-strip, .step,
+.state-block, .tile, .pill, .crowdsense-name, .crowdsense-sub {
+  font-family: var(--font-sans);
 }
 
 /* ---------- focus visibility ---------- */

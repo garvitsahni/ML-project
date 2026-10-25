@@ -338,3 +338,37 @@ def test_card_renders_multiple_instances_without_key_collision():
     at = AppTest.from_string(src, default_timeout=60).run()
     assert not at.exception
     assert len(at.error) == 0
+
+
+def test_theme_fits_to_frame():
+    """Nothing may spill past the frame; the page uses its full width."""
+    from src.ui import theme
+
+    assert theme.TOKENS["max_content"] == "1440px"
+    assert "overflow-x" in theme.CSS
+    assert "clamp(" in theme.CSS
+    # media embeds stay inside their column
+    assert "max-width: 100%" in theme.CSS
+
+
+def test_theme_uses_new_font():
+    """Plus Jakarta Sans, with a local fallback stack if the CDN is offline."""
+    from src.ui import theme
+
+    stack = theme.TOKENS["font_sans"]
+    assert stack.startswith('"Plus Jakarta Sans"')
+    assert "Segoe UI" in stack  # offline fallback
+    assert "font-family: var(--font-sans)" in theme.CSS
+
+
+def test_config_loads_the_font_source():
+    """Streamlit 1.51 loads `name:source_url` webfonts natively from config.toml."""
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / ".streamlit"
+            / "config.toml").read_text(encoding="utf-8")
+    line = next(l for l in text.splitlines() if l.startswith("font ="))
+    name, url = line.split("=", 1)[1].strip().strip('"').split(":", 1)
+    assert name == "Plus Jakarta Sans"
+    assert url.startswith("https://fonts.googleapis.com/css2")
+    assert url.count("family=") == 1  # one font per source URL (Streamlit rule)
