@@ -1,7 +1,10 @@
 # Design: Meaningful Accuracy Improvement for CrowdSense AI
 
 Date: 2026-10-21
-Status: draft, awaiting human-partner approval
+Status: completed (2026-11-02) — all 12 plan tasks executed; success-criteria
+outcome: Goal 1 not met at ≥ 0.75 AUC (achieved 0.6714), Goal 2 met
+(F1 0.517 → 0.5311), documented per the fallback clause in the README
+headline section.
 Scope: ML accuracy (primary) + targeted frontend UX fixes (secondary)
 
 ## Intent and why
