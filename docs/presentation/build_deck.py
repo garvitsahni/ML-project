@@ -258,6 +258,69 @@ def blank(prs):
     return prs.slides.add_slide(prs.slide_layouts[6])
 
 
+NOTES = {
+    1: """Good morning. This is CrowdSense AI. One question drives the project: when we watch a crowd, does how people move tell us more about anomalies than how many people there are and how they are arranged? Most crowd-monitoring systems answer only the second question — count heads, flag high numbers. I want to test what that leaves out. Everything here comes from one public dataset, one pipeline, and four test runs declared before they were scored.
+
+Transition: let me start with why those two views of a crowd are genuinely different.""",
+    2: """On the left, the static view: from one frame you get person count, density per megapixel, grid concentration, spread in x and y, and grid entropy. Six numbers describing a snapshot. On the right, the temporal view: over thirty frames you get speed, speed spread, direction entropy, flow, track persistence, neighbour distance, abrupt stops, reversals, fast movers, and turnover. Seventeen numbers describing behaviour. A crowd can be dense and calm — a packed platform at rush hour — or sparse and chaotic — a handful of people scattering. Density alone cannot separate those two. Motion can. I fixed the bar at 0.75 test AUC with better F1 before the final runs, so it could not move afterwards.
+
+Transition: here is the data that bar was set against.""",
+    3: """UCSD Anomaly Detection v1p2: 98 sequences, 18,560 frames, and 5,693 anomalous-frame labels parsed from the dataset's own ground truth. We build 3,222 sliding windows of 30 frames with stride 5. The split is by sequence id — 68 train, 15 validation, 15 test — enforced in code by an assertion, so no video appears in two splits. That matters more than it sounds: consecutive frames are near-duplicates, so a random frame split leaks test frames into training and inflates the score. Test is 495 windows, 179 of them anomalous. A window counts as anomalous if any frame inside it is. We use no counting dataset, so no counting error is ever reported.
+
+Transition: with the data fixed, here is how a video becomes one score.""",
+    4: """Five stages: read frames, detect with YOLOv8n, link detections across frames with ByteTrack so each person keeps an identity, compute Farneback optical flow, then aggregate into 30-frame windows. Each window becomes 23 features, and the model returns a probability of anomaly. A photo stops after detection and the six static features — one frame has no speed, direction, or flow — so the app shows no anomaly score for a photo. One detail I would defend: the detector threshold was not tuned on test. A calibration pass on a 40-frame grid chose confidence 0.05 and 640-pixel input by a pre-declared rule — maximise detections under a two-hour rebuild budget. That gave 16.40 boxes per frame against 10.25 before. It is a recall-over-precision choice, and I will come back to whether it helped.
+
+Transition: the features are the heart of the method, so let me name them.""",
+    5: """Six static features: person count — a detector estimate, never a ground-truth count — density per megapixel, grid concentration, spread in x, spread in y, and grid entropy. Seventeen movement features: density change, mean and spread of speed, direction entropy, directional consistency, flow magnitude and spread, track count and persistence, neighbour distance, abrupt stops, reversals, fast movers, ninetieth-percentile speed, turnover, and flow-direction inconsistency. One rule runs through all of them: speeds are pixels per frame at the processed resolution, never metres per second. There is no scene-scale calibration in this data, so metres per second would be invented. That rule is enforced in the code, the reports, and the interface.
+
+Transition: with 23 features, the question is how to evaluate them without fooling ourselves.""",
+    6: """This is the part I would defend hardest, because most of the work here is avoiding a number that looks good and means nothing. Step one: hyperparameters come from GroupKFold cross-validation on training sequences only, for five algorithms — logistic regression, decision tree, random forest, SVM, and XGBoost. Step two: the decision threshold is chosen on validation F1, never on test. Step three: the ensemble is a soft vote of random forest, SVM, and XGBoost, with members chosen by validation AUC. Step four: test is scored once for each of four configurations declared before the accuracy pass. Every extra look at test inflates the score, so the cap is the design, not a formality. The older A-to-D suite also reports test metrics, but those numbers drive no selection.
+
+Transition: so what do the four declared runs actually produce?""",
+    7: """Four rows. Row one, the baseline: original fifteen features, logistic regression, untuned, threshold 0.5 — 0.6677 AUC, 0.5068 F1. Row two adds the eight new movement features but keeps the untuned logistic regression, and it gets worse: 0.6475 and 0.4892. That is an honest and important result — more features without tuning hurt. Row three adds grouped-CV tuning and a validation-chosen threshold, and random forest wins on validation AUC: 0.6714 AUC, 0.5311 F1, at threshold 0.25. Row four is the soft-vote ensemble at threshold 0.20 — 0.6705 and 0.5090, so the ensemble does not beat the tuned single model. Against the previous headline of 0.675 AUC we are slightly down on AUC but up on F1, from 0.517 to 0.5311. Those are the numbers I will defend.
+
+Transition: and that brings me to the result I would rather not have.""",
+    8: """We set a goal of 0.75 test AUC and reached 0.6714. I am not going to present that as a win, and I am not going to redefine the goal. The bar shows the gap to scale: the fill is what we achieved, the line is what we declared. What the work does establish is that static density alone is close to chance — 0.43 to 0.56 across five algorithms. Movement carries the signal. But the ceiling on sequence-held-out UCSD sits near 0.67, and three attempts did not move it: a better-calibrated detector that raised detections from 10.25 to 16.40 boxes per frame, eight extra movement features, and a soft-vote ensemble. The new features only paid off once tuning and a validation threshold were added. What improved is F1, 0.517 to 0.5311, because the threshold is chosen on validation rather than assumed to be 0.5. The gain is F1, not AUC, and that is how it is reported.
+
+Transition: the ablation is the cleanest evidence for the research question.""",
+    9: """This table isolates the feature groups at threshold 0.5, for all five algorithms. Column A is static only, B is movement only, C is both. Logistic regression goes from 0.505 to 0.648; SVM from 0.427 to 0.682; random forest from 0.470 to 0.671; XGBoost from 0.499 to 0.614; even the decision tree moves from 0.563 to 0.593. The last column is C minus A: plus 0.142, 0.255, 0.115, 0.202, 0.029. Positive in all five rows. That is the direct answer to the research question — movement features help every algorithm tested. Movement-only already recovers most of the signal; static-only sits near chance. The curve is random forest on config C, test ROC, AUC 0.671.
+
+Transition: now the limits, because they bound every claim on these slides.""",
+    10: """Six limits. No density CNN — the machine is CPU-only, so counting is a YOLOv8n detection baseline, not a density regressor. No counting ground truth — QNRF and ShanghaiTech were dropped from scope, so no MAE or RMSE appears anywhere in this project. No congestion labels — Experiment E is hard-gated off as not supported. Speeds are pixels per frame, with no scene-scale calibration. Window labels are frame-level, and therefore coarser than the score. And calibration is a budget choice, recall over precision. Any claim about counting accuracy, metres per second, or congestion classes would be unsupported by this data.
+
+Transition: the pipeline is also a working product, which is what I will show next.""",
+    11: """The same code sits behind a React and TypeScript app served by FastAPI. Three tools only: Photo Analysis detects, annotates, draws a four-by-four density grid, and reports the six static features, with no anomaly score; Video Analysis runs the full window pipeline and shows per-window scores when a compatible bundle exists; Live Camera does single-frame detection. The interface keeps the honesty rules — missing metrics render as a dash, counts are labelled estimates, speeds stay in pixels per frame. Let me show one photo and one short clip.
+
+Transition: three things to take away.""",
+    12: """Three takeaways. Movement matters: temporal features beat static density for every algorithm tested. The ceiling is real: sequence-held-out UCSD plateaus near 0.67 AUC, so the defensible gain is F1, not AUC. And honesty is a design choice: grouped splits, four pre-declared runs, validation-only selection, and no invented metrics. Next steps would be more sequences for tighter intervals, a GPU density model, and richer anomaly labels. Thank you — I am happy to take questions.""",
+}
+
+
+# ------------------------------------------------------------- rehearsal timing
+WPM = 135  # rehearsal pace used for the target labels
+DEMO_SECONDS = {11: 30}  # slide 11 includes a live demo
+
+
+def timing_plan():
+    """(slide, start_seconds, end_seconds) for the notes as written."""
+    rows, t = [], 0.0
+    for k in sorted(NOTES):
+        secs = len(NOTES[k].split()) / WPM * 60 + DEMO_SECONDS.get(k, 0)
+        rows.append((k, t, t + secs))
+        t += secs
+    return rows
+
+
+def _clock(seconds):
+    m, s = divmod(int(round(seconds)), 60)
+    return f"{m}:{s:02d}"
+
+
+def note_text(k):
+    start, end = timing_plan()[k - 1][1:]
+    return f"Slide {k} · target {_clock(start)}-{_clock(end)}. {NOTES[k]}"
+
+
 # ----------------------------------------------------------------------- slides
 def slide_title(prs):
     s = blank(prs)
@@ -277,14 +340,7 @@ def slide_title(prs):
         size=14, color=RGBColor(0x94, 0xA3, 0xB8),
     )
     add_text(s, 1.0, 6.35, 11.0, 0.35, "UCSD Anomaly Detection Dataset v1p2  ·  CPU-only  ·  seed 42", size=12, color=RGBColor(0x64, 0x74, 0x8B))
-    add_notes(
-        s,
-        "Opening (about 20 seconds). This is CrowdSense AI. The question is simple: "
-        "when we look at a crowd, does how people move tell us more about anomalies than "
-        "how many people there are and how they are arranged? I'll show the data, the "
-        "pipeline, the four pre-declared test runs, and the honest result — including the "
-        "target we did not hit.",
-    )
+    add_notes(s, note_text(1))
 
 
 def slide_question(prs):
@@ -319,14 +375,7 @@ def slide_question(prs):
         "Pre-declared success: held-out test AUC ≥ 0.75 with better F1.  The honest answer is on slide 7.",
         size=12.5, color=MUTED,
     )
-    add_notes(
-        s,
-        "About 45 seconds. A single frame gives density: count and layout. A video adds "
-        "motion: speed, turns, stops, flow. The research question asks whether the motion "
-        "signal adds predictive value beyond density. We committed to a success bar of "
-        "0.75 test AUC before running the final experiments, so we cannot move the goalposts "
-        "afterwards.",
-    )
+    add_notes(s, note_text(2))
 
 
 def slide_data(prs):
@@ -378,15 +427,7 @@ def slide_data(prs):
         add_rect(s, left_sq, top_sq, sq, sq, fill=fill)
     add_text(s, 11.92, 5.98, 0.7, 0.3, "= 1", size=12, bold=True, color=RED)
     add_text(s, 11.92, 6.22, 0.7, 0.3, "= 0", size=12, bold=True, color=FAINT)
-    add_notes(
-        s,
-        "About 45 seconds. UCSD v1p2 has 98 sequences and 18,560 frames, with 5,693 "
-        "anomalous frames parsed from the dataset's own ground-truth files. We build "
-        "3,222 sliding windows of 30 frames with stride 5. The split is by sequence, "
-        "68 train, 15 validation, 15 test — so the model never sees frames from a test "
-        "video during training. The test split is 495 windows, 179 anomalous. We did not "
-        "use any counting dataset, so we never report counting error.",
-    )
+    add_notes(s, note_text(3))
 
 
 def slide_pipeline(prs):
@@ -432,15 +473,7 @@ def slide_pipeline(prs):
     add_text(s, MARGIN, 5.95, CONTENT_W, 0.6,
              "Detector calibration: a 40-frame grid chose conf 0.05 / 640 px by a pre-declared rule — most detections under a 2-hour rebuild budget (16.40 vs 10.25 boxes/frame).",
              size=11.5, color=FAINT, italic=True)
-    add_notes(
-        s,
-        "About 60 seconds. The pipeline is: read frames, detect people with YOLOv8n, link "
-        "them across frames with ByteTrack, compute Farneback optical flow, and aggregate "
-        "everything into 30-frame windows with stride 5. Each window becomes a 23-feature "
-        "row and the trained model returns P(anomaly). A photo stops after detection and "
-        "the six static features, because one frame has no motion. The detector threshold "
-        "came from a pre-declared calibration rule, not from tuning on test.",
-    )
+    add_notes(s, note_text(4))
 
 
 def slide_features(prs):
@@ -478,14 +511,7 @@ def slide_features(prs):
     add_text(s, MARGIN + 0.2, 6.47, CONTENT_W - 0.4, 0.3,
              "All speeds are px/frame at processed resolution — never m/s (no scene-scale calibration).",
              size=11.5, color=MUTED)
-    add_notes(
-        s,
-        "About 45 seconds. Six static features describe count and layout. Seventeen "
-        "movement features describe speed, speed spread, direction entropy, flow, track "
-        "persistence, neighbour distance, stops, reversals, fast movers, and turnover. "
-        "Every speed is in pixels per frame, because we have no way to convert pixels to "
-        "metres in these scenes. That unit rule is enforced throughout the code and the UI.",
-    )
+    add_notes(s, note_text(5))
 
 
 def slide_method(prs):
@@ -511,15 +537,7 @@ def slide_method(prs):
         "Why the cap matters: every extra look at test inflates the score. The screen, tuning, and threshold all avoid test.",
         size=12.5, color=ACCENT,
     )
-    add_notes(
-        s,
-        "About 60 seconds. The evaluation design is the part I would defend hardest. "
-        "Hyperparameters come from GroupKFold cross-validation on train. The decision "
-        "threshold comes from validation F1. Ensemble membership comes from validation "
-        "AUC. Only then do we score test, and only for four configurations that were "
-        "declared before the accuracy pass. The pre-existing A-to-D experiment suite also "
-        "reports test metrics, but those numbers drive no selection decision.",
-    )
+    add_notes(s, note_text(6))
 
 
 def slide_results(prs):
@@ -544,15 +562,7 @@ def slide_results(prs):
     add_stat(s, MARGIN, 5.25, 3.55, 1.2, "0.6714", "best test AUC (run 3)", accent=ACCENT)
     add_stat(s, MARGIN + 3.8, 5.25, 3.55, 1.2, "0.5311", "best test F1 (run 3)", accent=GREEN, fill=GREEN_SOFT)
     add_stat(s, MARGIN + 7.6, 5.25, 4.53, 1.2, "−0.004", "vs. previous AUC 0.675", accent=AMBER, fill=AMBER_SOFT)
-    add_notes(
-        s,
-        "About 60 seconds. Here are the four declared runs. The baseline with the original "
-        "15 features scores 0.6677 AUC. Adding the eight new movement features without "
-        "tuning actually hurts: 0.6475. Grouped-CV tuning plus a validation-chosen "
-        "threshold gives the best result, 0.6714 AUC and 0.5311 F1. The ensemble does not "
-        "beat the tuned single model. Against the previous headline of 0.675 AUC, we are "
-        "slightly down on AUC but up on F1, 0.517 to 0.5311.",
-    )
+    add_notes(s, note_text(7))
 
 
 def slide_outcome(prs):
@@ -595,15 +605,7 @@ def slide_outcome(prs):
     add_text(s, MARGIN + 0.25, 6.16, CONTENT_W - 0.5, 0.45,
              "Reported as measured: the gain is in F1, not AUC. The earlier 0.675 baseline is not re-labelled, and no metric is dropped or rounded up.",
              size=12, color=INK)
-    add_notes(
-        s,
-        "About 60 seconds. This is the slide I want to be judged on. We set 0.75 AUC and "
-        "we got 0.6714. I am not going to present that as a win. Static density is close "
-        "to chance; movement clearly carries the signal, but the absolute ceiling on "
-        "sequence-held-out UCSD is around 0.67. Calibration increased detections without "
-        "lifting AUC. The new features need tuning to help. What did improve is F1, from "
-        "0.517 to 0.5311, because the threshold is chosen on validation rather than 0.5.",
-    )
+    add_notes(s, note_text(8))
 
 
 def slide_ablation(prs):
@@ -640,15 +642,7 @@ def slide_ablation(prs):
         add_text(s, 8.45, 1.72 + pic_w * 472 / 505 + 0.08, 4.3, 0.55,
                  "Random forest, config C (static + movement), test ROC — AUC 0.671.",
                  size=10.5, color=MUTED, spacing=1.04)
-    add_notes(
-        s,
-        "About 60 seconds. The ablation isolates the two feature groups. Column A is static "
-        "only: AUC 0.43 to 0.56, barely better than chance. Column B is movement only, and "
-        "it recovers most of the signal. Column C combines them. The last column is C minus "
-        "A: positive for all five algorithms, from plus 0.029 for a decision tree to plus "
-        "0.255 for an SVM. That is the direct answer to the research question: movement "
-        "features help. The ROC curve on the right is the random forest on config C.",
-    )
+    add_notes(s, note_text(9))
 
 
 def slide_limits(prs):
@@ -675,15 +669,7 @@ def slide_limits(prs):
     add_text(s, MARGIN + 0.22, 6.43, CONTENT_W - 0.44, 0.3,
              "Any claim about counting accuracy, m/s speeds, or congestion classes would be unsupported by this data.",
              size=11.5, color=MUTED)
-    add_notes(
-        s,
-        "About 45 seconds. These are the limits I would put on any citation. There is no "
-        "density CNN because the machine is CPU-only. There is no counting ground truth, "
-        "so no counting error is reported. Congestion classification is switched off "
-        "because credible labels do not exist. Speeds are pixels per frame, not metres per "
-        "second. Window labels are coarser than the model output. And the detector "
-        "threshold is a documented budget choice, not a truth.",
-    )
+    add_notes(s, note_text(10))
 
 
 def slide_product(prs):
@@ -722,14 +708,7 @@ def slide_product(prs):
     add_text(s, MARGIN + 0.25, 5.44, CONTENT_W - 0.5, 0.5,
              "python -m uvicorn backend.app:app  →  http://127.0.0.1:8000   ·   missing metrics render as —, counts are labelled estimates, speeds stay px/frame",
              size=11.5, color=MUTED, spacing=1.05)
-    add_notes(
-        s,
-        "About 45 seconds. The pipeline is not just a notebook. The same code sits behind "
-        "a React and FastAPI app with three tools: photo, video, and live camera. The UI "
-        "keeps the honesty rules: missing values render as a dash, counts are labelled "
-        "detector estimates, and speeds stay in pixels per frame. If you want a live demo, "
-        "the server is already running on port 8000.",
-    )
+    add_notes(s, note_text(11))
 
 
 def slide_takeaways(prs):
@@ -751,13 +730,7 @@ def slide_takeaways(prs):
     add_text(s, MARGIN + 0.25, 5.5, CONTENT_W - 0.5, 0.5,
              "Next: more sequences for tighter intervals, a GPU density CNN, and richer anomaly labels.   Questions?",
              size=14, bold=True, color=INK)
-    add_notes(
-        s,
-        "About 30 seconds plus questions. Three takeaways: movement features matter, the "
-        "ceiling on this benchmark is real, and the honesty rules are part of the design, "
-        "not an afterthought. Next steps would be more sequences, a GPU density model, and "
-        "better labels. Thank you — happy to take questions.",
-    )
+    add_notes(s, note_text(12))
 
 
 def build():
@@ -781,5 +754,15 @@ def build():
     print(f"wrote {OUT} ({len(prs.slides)} slides)")
 
 
+def print_timing():
+    plan = timing_plan()
+    print(f"rehearsal plan at {WPM} wpm: {_clock(plan[-1][2])} total")
+    for k, start, end in plan:
+        words = len(NOTES[k].split())
+        demo = f"  (+{DEMO_SECONDS[k]}s demo)" if k in DEMO_SECONDS else ""
+        print(f"  slide {k:2d}  {_clock(start):>5}-{_clock(end):<5}  {words:4d} words{demo}")
+
+
 if __name__ == "__main__":
     build()
+    print_timing()
