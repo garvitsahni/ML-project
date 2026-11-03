@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { ModelBadge } from '../components/ModelBadge'
+import { Details } from '../components/Details'
 import { ImageResultsPanel } from '../components/ResultsPanel'
 import { UploadDropzone } from '../components/UploadDropzone'
-import { detectImage, errorMessage } from '../lib/api'
+import { detectImage, friendlyError } from '../lib/api'
 import type { ImageDetectionResult } from '../types'
+
+const STEPS = [
+  'Upload a photo of a crowd.',
+  'Press “Check crowd level”.',
+  'Read the one-word answer.',
+]
 
 export default function PhotoAnalysis() {
   const [file, setFile] = useState<File | null>(null)
@@ -39,7 +45,7 @@ export default function PhotoAnalysis() {
     try {
       setResult(await detectImage(file, { conf, imgsz }))
     } catch (caught) {
-      setError(errorMessage(caught))
+      setError(friendlyError(caught))
       setResult(null)
     } finally {
       setLoading(false)
@@ -48,15 +54,13 @@ export default function PhotoAnalysis() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Photo Analysis</h1>
-          <p className="text-sm text-slate-600">
-            Static analysis of one frame — person detection, density grid, and the six
-            static features. Movement features need Video Analysis.
-          </p>
-        </div>
-        <ModelBadge />
+      <header>
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          How crowded is this photo?
+        </h1>
+        <p className="mt-1 text-slate-600">
+          Upload a photo. We count the people we can see and give you a simple answer.
+        </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -66,23 +70,31 @@ export default function PhotoAnalysis() {
             onFileSelect={handleFile}
             acceptedTypes="image/jpeg,image/png,image/tiff,image/bmp"
             maxSize={10 * 1024 * 1024}
-            hint="JPG, PNG, TIF, or BMP"
+            hint="JPG, PNG, TIF or BMP · up to 10 MB"
           />
 
           {previewUrl && (
-            <div>
-              <p className="mb-2 text-sm font-medium text-slate-700">Preview</p>
-              <img
-                src={previewUrl}
-                alt="Upload preview"
-                className="w-full rounded-lg ring-1 ring-slate-200"
-              />
-            </div>
+            <img
+              src={previewUrl}
+              alt="The photo you chose"
+              className="w-full rounded-lg ring-1 ring-slate-200"
+            />
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={handleDetect}
+            disabled={!file || loading}
+            className="w-full rounded-lg bg-brand-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+          >
+            {loading ? 'Checking…' : 'Check crowd level'}
+          </button>
+
+          <Details summary="Advanced settings">
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Confidence ({conf.toFixed(2)})</span>
+              <span className="font-medium text-slate-700">
+                Detector sensitivity ({conf.toFixed(2)})
+              </span>
               <input
                 type="range"
                 min={0.01}
@@ -92,54 +104,60 @@ export default function PhotoAnalysis() {
                 onChange={(event) => setConf(Number(event.target.value))}
                 className="mt-2 w-full accent-brand-600"
               />
+              <span className="mt-1 block text-xs text-slate-500">
+                Lower finds more people, including ones it is unsure about. Leave it alone
+                unless you have a reason.
+              </span>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Inference size</span>
+              <span className="font-medium text-slate-700">Image size</span>
               <select
                 value={imgsz}
                 onChange={(event) => setImgsz(Number(event.target.value))}
                 className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2"
               >
-                <option value={320}>320px</option>
-                <option value={640}>640px</option>
-                <option value={1280}>1280px</option>
+                <option value={320}>Small (fast)</option>
+                <option value={640}>Normal</option>
+                <option value={1280}>Large (slower, finer detail)</option>
               </select>
             </label>
-          </div>
+          </Details>
 
-          <button
-            type="button"
-            onClick={handleDetect}
-            disabled={!file || loading}
-            className="w-full rounded-md bg-brand-600 px-4 py-2 font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {loading ? 'Detecting…' : 'Detect persons'}
-          </button>
           <p className="text-xs text-slate-500">
-            Detection runs on CPU (YOLOv8n). Counts are detector estimates — no counting
-            ground truth exists.
+            Runs on this computer. The photo is not sent to the internet.
           </p>
         </section>
 
         <div className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 ring-1 ring-inset ring-red-200" role="alert">
-              <p className="font-medium">Analysis failed</p>
+            <div
+              className="rounded-lg bg-red-50 p-4 text-sm text-red-700 ring-1 ring-inset ring-red-200"
+              role="alert"
+            >
+              <p className="font-medium">That didn’t work</p>
               <p className="mt-1">{error}</p>
             </div>
           )}
+
           {result ? (
             <ImageResultsPanel result={result} />
           ) : (
             !error && (
-              <div className="flex h-full min-h-[18rem] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                <span className="text-5xl" aria-hidden>
-                  🖼️
-                </span>
-                <p className="mt-3 font-medium text-slate-700">No results yet</p>
-                <p className="text-sm text-slate-500">
-                  Upload a crowd photo and run detection to see the annotated frame,
-                  density grid, and static features.
+              <div className="flex h-full min-h-[20rem] flex-col justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8">
+                <p className="text-lg font-semibold text-slate-800">Three steps</p>
+                <ol className="mt-4 space-y-3">
+                  {STEPS.map((step, index) => (
+                    <li key={step} className="flex items-start gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm text-slate-600">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-6 text-xs text-slate-500">
+                  You will get one word — Quiet, Busy or Crowded — and the estimated number
+                  of people.
                 </p>
               </div>
             )

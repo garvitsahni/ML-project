@@ -18,8 +18,9 @@ export default function App() {
         </Routes>
       </main>
       <footer className="mx-auto w-full max-w-7xl px-4 pb-8 text-xs text-slate-500 sm:px-6 lg:px-8">
-        Detector counts are estimates; no counting ground truth exists. Speeds are
-        px/frame — never m/s. Anomaly scores come from a modest sequence-held-out model.
+        Quiet / Busy / Crowded is a simple rule on the number of people the detector
+        finds — not a head count, and not a trained classifier. This app does not score
+        anomalies.
       </footer>
     </div>
   )

@@ -73,3 +73,24 @@ export function detectVideo(
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
+
+/** Turn a raw failure into something a first-time user can act on. */
+export function friendlyError(error: unknown): string {
+  const raw = errorMessage(error)
+  if (/failed to fetch|networkerror|load failed|network request failed/i.test(raw)) {
+    return 'We could not reach the analysis service. Make sure the server is running, then try again.'
+  }
+  if (/HTTP 413/.test(raw)) {
+    return 'That file is too large. Try a smaller photo or a shorter clip.'
+  }
+  if (/HTTP 415/.test(raw)) {
+    return 'That file type is not supported. Try a JPG, PNG, or MP4.'
+  }
+  if (/HTTP 422/.test(raw)) {
+    return 'We could not read that file. Try a different photo or clip.'
+  }
+  if (/HTTP 5\d\d/.test(raw)) {
+    return 'Something went wrong on the server. Try again in a moment.'
+  }
+  return raw
+}

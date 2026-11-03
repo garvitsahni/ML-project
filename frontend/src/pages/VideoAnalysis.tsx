@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { ModelBadge } from '../components/ModelBadge'
+import { Details } from '../components/Details'
 import { VideoResultsPanel } from '../components/ResultsPanel'
 import { UploadDropzone } from '../components/UploadDropzone'
-import { detectVideo, errorMessage } from '../lib/api'
+import { detectVideo, friendlyError } from '../lib/api'
 import type { VideoDetectionResult } from '../types'
+
+const STEPS = [
+  'Upload a short clip.',
+  'Press “Check crowd level”.',
+  'Read the level, then see how it changes over the clip.',
+]
 
 export default function VideoAnalysis() {
   const [file, setFile] = useState<File | null>(null)
@@ -41,7 +47,7 @@ export default function VideoAnalysis() {
     try {
       setResult(await detectVideo(file, { conf, imgsz, maxFrames, stride }))
     } catch (caught) {
-      setError(errorMessage(caught))
+      setError(friendlyError(caught))
       setResult(null)
     } finally {
       setLoading(false)
@@ -50,15 +56,13 @@ export default function VideoAnalysis() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Video Analysis</h1>
-          <p className="text-sm text-slate-600">
-            Detect → track → optical flow → 30-frame sliding windows. Anomaly scores appear
-            only when a compatible trained bundle exists.
-          </p>
-        </div>
-        <ModelBadge />
+      <header>
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          How crowded is this video?
+        </h1>
+        <p className="mt-1 text-slate-600">
+          Upload a short clip. We count people over time and show how the crowd changes.
+        </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -68,7 +72,7 @@ export default function VideoAnalysis() {
             onFileSelect={handleFile}
             acceptedTypes="video/mp4,video/x-msvideo,video/quicktime,video/x-matroska,video/webm"
             maxSize={200 * 1024 * 1024}
-            hint="MP4, AVI, MOV, MKV, or WEBM"
+            hint="MP4, AVI, MOV, MKV or WEBM · up to 200 MB"
           />
 
           {previewUrl && (
@@ -79,9 +83,25 @@ export default function VideoAnalysis() {
             />
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={handleAnalyze}
+            disabled={!file || loading}
+            className="w-full rounded-lg bg-brand-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+          >
+            {loading ? 'Checking the clip…' : 'Check crowd level'}
+          </button>
+          {loading && (
+            <p className="text-center text-xs text-slate-500">
+              This can take a few seconds. Keep this tab open.
+            </p>
+          )}
+
+          <Details summary="Advanced settings">
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Confidence ({conf.toFixed(2)})</span>
+              <span className="font-medium text-slate-700">
+                Detector sensitivity ({conf.toFixed(2)})
+              </span>
               <input
                 type="range"
                 min={0.01}
@@ -91,22 +111,25 @@ export default function VideoAnalysis() {
                 onChange={(event) => setConf(Number(event.target.value))}
                 className="mt-2 w-full accent-brand-600"
               />
+              <span className="mt-1 block text-xs text-slate-500">
+                Lower finds more people, including ones it is unsure about.
+              </span>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Inference size</span>
+              <span className="font-medium text-slate-700">Image size</span>
               <select
                 value={imgsz}
                 onChange={(event) => setImgsz(Number(event.target.value))}
                 className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2"
               >
-                <option value={320}>320px</option>
-                <option value={640}>640px</option>
-                <option value={1280}>1280px</option>
+                <option value={320}>Small (fast)</option>
+                <option value={640}>Normal</option>
+                <option value={1280}>Large (slower, finer detail)</option>
               </select>
             </label>
             <label className="block text-sm">
               <span className="font-medium text-slate-700">
-                Max frames ({maxFrames})
+                How much of the clip to check ({maxFrames} frames)
               </span>
               <input
                 type="range"
@@ -117,9 +140,14 @@ export default function VideoAnalysis() {
                 onChange={(event) => setMaxFrames(Number(event.target.value))}
                 className="mt-2 w-full accent-brand-600"
               />
+              <span className="mt-1 block text-xs text-slate-500">
+                Checking more frames takes longer but covers more of the clip.
+              </span>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Frame stride ({stride})</span>
+              <span className="font-medium text-slate-700">
+                Skip frames between checks ({stride})
+              </span>
               <input
                 type="range"
                 min={1}
@@ -129,42 +157,48 @@ export default function VideoAnalysis() {
                 onChange={(event) => setStride(Number(event.target.value))}
                 className="mt-2 w-full accent-brand-600"
               />
+              <span className="mt-1 block text-xs text-slate-500">
+                Higher is faster but coarser. Leave at 1 for the best detail.
+              </span>
             </label>
-          </div>
+          </Details>
 
-          <button
-            type="button"
-            onClick={handleAnalyze}
-            disabled={!file || loading}
-            className="w-full rounded-md bg-brand-600 px-4 py-2 font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {loading ? 'Processing frames…' : 'Analyze video'}
-          </button>
           <p className="text-xs text-slate-500">
-            CPU cost is roughly 20–50 ms per processed frame. A clip needs at least 30
-            processed frames to produce one window. Speeds are px/frame — never m/s.
+            Runs on this computer. The clip is not sent to the internet. A clip needs at
+            least 30 frames to produce a result.
           </p>
         </section>
 
         <div className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 ring-1 ring-inset ring-red-200" role="alert">
-              <p className="font-medium">Analysis failed</p>
+            <div
+              className="rounded-lg bg-red-50 p-4 text-sm text-red-700 ring-1 ring-inset ring-red-200"
+              role="alert"
+            >
+              <p className="font-medium">That didn’t work</p>
               <p className="mt-1">{error}</p>
             </div>
           )}
+
           {result ? (
             <VideoResultsPanel result={result} />
           ) : (
             !error && (
-              <div className="flex h-full min-h-[18rem] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                <span className="text-5xl" aria-hidden>
-                  🎬
-                </span>
-                <p className="mt-3 font-medium text-slate-700">No results yet</p>
-                <p className="text-sm text-slate-500">
-                  Upload a crowd video and run analysis to see window features and, when a
-                  model is available, per-window anomaly scores.
+              <div className="flex h-full min-h-[20rem] flex-col justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8">
+                <p className="text-lg font-semibold text-slate-800">Three steps</p>
+                <ol className="mt-4 space-y-3">
+                  {STEPS.map((step, index) => (
+                    <li key={step} className="flex items-start gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm text-slate-600">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-6 text-xs text-slate-500">
+                  You will get one word for the whole clip and a coloured strip showing each
+                  moment.
                 </p>
               </div>
             )
