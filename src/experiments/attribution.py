@@ -16,17 +16,10 @@ import numpy as np
 import pandas as pd
 
 from src.experiments.metrics import compute_binary_metrics
+from src.features.schema import ORIGINAL_15
 from src.models.splitting import assert_group_disjoint, grouped_split
 from src.models.trainers import train_model
 from src.models.tuning import best_threshold, soft_vote, tune_model
-
-# The pre-schema-v2 feature set (git history of src/features/schema.py).
-ORIGINAL_15 = [
-    "person_count", "density_per_mpx", "grid_concentration", "spread_x",
-    "spread_y", "grid_entropy", "density_delta", "mean_speed_pxf",
-    "speed_std_pxf", "direction_entropy", "directional_consistency",
-    "flow_mean_magnitude", "flow_std_pxf", "track_count", "track_persistence",
-]
 
 ENSEMBLE_MEMBERS = 3
 

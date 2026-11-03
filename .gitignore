@@ -34,5 +34,11 @@ app_uploads/
 # Logs
 reports/results/*.log
 reports/results/*.err
+reports/*.log
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+backend/static/
 
 .superpowers/

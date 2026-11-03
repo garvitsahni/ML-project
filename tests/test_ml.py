@@ -113,6 +113,25 @@ def test_save_load_roundtrip(tmp_path, synthetic_xy):
     np.testing.assert_array_equal(predict(loaded, X), predict(bundle, X))
 
 
+def test_fingerprint_roundtrips(tmp_path, synthetic_xy):
+    bundle = _bundle(synthetic_xy)
+    bundle.schema_fingerprint = "abc123"
+    loaded = load_bundle(save_bundle(bundle, tmp_path / "fp.joblib"))
+    assert loaded.schema_fingerprint == "abc123"
+
+
+def test_load_bundle_without_fingerprint_key_is_legacy(tmp_path, synthetic_xy):
+    """Bundles saved before fingerprints existed load with fp=None (the
+    service then applies the exact-schema legacy rule)."""
+    import joblib
+
+    path = save_bundle(_bundle(synthetic_xy), tmp_path / "old.joblib")
+    data = joblib.load(path)
+    del data["schema_fingerprint"]
+    joblib.dump(data, path)
+    assert load_bundle(path).schema_fingerprint is None
+
+
 def test_load_rejects_wrong_version(tmp_path, synthetic_xy):
     import joblib
 

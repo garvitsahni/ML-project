@@ -2,11 +2,20 @@
 
 ``FeatureSchema.names`` is the SINGLE ordering source consumed by training,
 saved bundles, and inference — schema mismatches are rejected at load time.
+``FeatureSchema.fingerprint`` content-hashes that ordering; bundles record
+it so inference can distinguish "trained under this schema" (possibly on a
+screened subset) from "predates this schema".
 """
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
+
+
+def schema_fingerprint(names: list[str]) -> str:
+    """Stable sha256 over an ordered feature-name list (schema identity)."""
+    return hashlib.sha256("\x1f".join(names).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -48,6 +57,17 @@ _MOVEMENT = [
 ]
 
 
+# The pre-schema-v2 feature set (15 names; git history of this file). Single
+# source for baseline reproduction (attribution config 1) and the redundancy
+# screen's comparison set.
+ORIGINAL_15 = [
+    "person_count", "density_per_mpx", "grid_concentration", "spread_x",
+    "spread_y", "grid_entropy", "density_delta", "mean_speed_pxf",
+    "speed_std_pxf", "direction_entropy", "directional_consistency",
+    "flow_mean_magnitude", "flow_std_pxf", "track_count", "track_persistence",
+]
+
+
 class FeatureSchema:
     """Frozen canonical schema; ``default()`` returns the project instance."""
 
@@ -71,6 +91,10 @@ class FeatureSchema:
     @property
     def movement_names(self) -> list[str]:
         return self.names_for({"movement"})
+
+    @property
+    def fingerprint(self) -> str:
+        return schema_fingerprint(self.names)
 
 
 _DEFAULT = FeatureSchema()

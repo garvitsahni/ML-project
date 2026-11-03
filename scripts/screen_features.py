@@ -21,12 +21,21 @@ V2_CANDIDATES = [
     "track_turnover_rate", "flow_direction_inconsistency",
 ]
 
-ORIGINAL_15 = [
-    "person_count", "density_per_mpx", "grid_concentration", "spread_x",
-    "spread_y", "grid_entropy", "density_delta", "mean_speed_pxf",
-    "speed_std_pxf", "direction_entropy", "directional_consistency",
-    "flow_mean_magnitude", "flow_std_pxf", "track_count", "track_persistence",
-]
+from src.features.schema import ORIGINAL_15  # noqa: E402  (after sys.path setup)
+
+
+def train_val_subset(df):
+    """Drop the sanctioned test split before screening (train/val only).
+
+    Uses the project's grouped sequence split (seed 42) — the same one the
+    experiments use — so no test-split row ever feeds feature selection.
+    """
+    import numpy as np
+
+    from src.models.splitting import grouped_split
+
+    split = grouped_split(df["sequence_id"].to_numpy(), seed=42)
+    return df.iloc[np.concatenate([split.train, split.val])]
 
 
 def main() -> int:
@@ -47,7 +56,7 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
-    df = pd.read_parquet(args.table)
+    df = train_val_subset(pd.read_parquet(args.table))
     per_feature = {}
     for cand in V2_CANDIDATES:
         if cand not in df.columns:
@@ -72,7 +81,9 @@ def main() -> int:
         "flagged": flagged,
         "exclude_features_flag": ",".join(flagged),
         "note": "flagged candidates are excluded from bundle feature sets via "
-                "train_ml.py --exclude-features; they stay in the schema/table",
+                "train_ml.py --exclude-features; they stay in the schema/table; "
+                "screened on train+val rows only (grouped_split seed=42, "
+                "test sequences excluded)",
     }
     args.out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     if flagged:

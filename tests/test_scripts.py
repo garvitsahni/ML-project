@@ -66,6 +66,34 @@ def test_evaluate_graceful_without_table(project_root, tmp_path):
     assert "Traceback" not in r.stderr + r.stdout
 
 
+def test_screen_excludes_test_split_rows():
+    """The redundancy screen must never read test-split rows (README:
+    feature screening uses train/val only)."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "screen_features", SCRIPTS / "screen_features.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    import numpy as np
+    import pandas as pd
+
+    from src.models.splitting import grouped_split
+
+    rng = np.random.default_rng(0)
+    seqs = [f"seq{i:02d}" for i in range(20)]
+    df = pd.DataFrame({
+        "sequence_id": np.repeat(seqs, 10),
+        "person_count": rng.normal(size=200),
+    })
+    split = grouped_split(df["sequence_id"].to_numpy(), seed=42)
+    out = mod.train_val_subset(df)
+    test_ids = set(df["sequence_id"].iloc[split.test])
+    assert set(out["sequence_id"]).isdisjoint(test_ids)
+    assert len(out) == len(split.train) + len(split.val)
+
+
 def test_full_cli_e2e_on_fixture(project_root, tmp_path):
     """prepare -> train (logreg only) -> evaluate on a synthetic UCSD fixture."""
     root = make_ucsd_fixture(tmp_path / "UCSD")

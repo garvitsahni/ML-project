@@ -36,9 +36,14 @@ python scripts/prepare_data.py
 python scripts/train_ml.py
 #    Accuracy pass — grouped-CV tuning + val thresholds + soft-vote ensemble +
 #    label robustness; the four pre-declared test runs land in
-#    experiment_attribution.json (test touched once per config):
+#    experiment_attribution.json (config 3 records every tuned algorithm,
+#    selected by val AUC):
 python scripts/train_ml.py --tune --robustness
-#    Redundancy screen of the schema-v2 features (Spearman vs original 15):
+#    (Standalone equivalent of the attribution step — run EITHER this OR the
+#    --tune command above, never both, so test is evaluated once per config:)
+# python scripts/attribution.py
+#    Redundancy screen of the schema-v2 features (Spearman vs original 15,
+#    computed on train/val rows only):
 python scripts/screen_features.py
 
 # 7. Evaluate bundles on the held-out test split (+ Experiment E gate status)
@@ -108,10 +113,11 @@ Method guarantees:
 - **Units** are px/frame at processed resolution — never m/s (no scale).
 - Metrics are computed on the held-out **test** split; undefined metrics are
   `null`, never invented (e.g. ROC AUC with one class present).
-- **Capped test evaluation (accuracy effort)** — exactly four pre-declared
-  configurations touch test, each logged with provenance in
-  `experiment_attribution.json`; feature screening, thresholds, and ensemble
-  membership all use train-side GroupKFold CV or the val split only.
+- **Capped test evaluation (accuracy effort)** — four *new* pre-declared
+  configurations were evaluated on test, each logged with provenance in
+  `experiment_attribution.json`; the pre-existing A–D suite also reports
+  test metrics but drives no selection decision. Feature screening,
+  thresholds, and ensemble membership all use train/val data only.
 
 ## Limitations (read before citing anything)
 
@@ -156,10 +162,11 @@ reports/
 Provenance: 98 sequences → 3222 windows (30 frames, stride 5) from the
 calibrated detector (YOLOv8n conf=0.05, imgsz=640 → 16.40 boxes/frame);
 grouped split by sequence id — **68 train / 15 val / 15 test, disjoint**
-(seed 42) — test = 495 windows (179 anomalous). Test is evaluated exactly
-once per config, inside `src/experiments/attribution.py`; every threshold,
-hyperparameter, and ensemble-membership decision used train-side GroupKFold
-CV or the val split only. Source: `reports/results/experiment_attribution.json`.
+(seed 42) — test = 495 windows (179 anomalous). Each pre-declared
+configuration is evaluated on test inside `src/experiments/attribution.py`
+(config 3 records every tuned algorithm and selects by **val** AUC); every
+threshold, hyperparameter, and ensemble-membership decision used train-side
+GroupKFold CV or the val split only. Source: `reports/results/experiment_attribution.json`.
 
 | # | config (selection rule) | features | threshold | test AUC | test F1 |
 |---|-------------------------|----------|-----------|----------|---------|
@@ -216,6 +223,7 @@ scripts/
   inspect_dataset.py       # dataset summary (graceful if absent)
   calibrate_detection.py   # conf/imgsz grid on sampled frames (pre-declared rule)
   prepare_data.py          # frames -> window feature table (parquet)
+  attribution.py           # the four pre-declared test-split runs (spec Goal 3)
   screen_features.py       # Spearman redundancy screen for schema-v2 candidates
   train_ml.py              # bundles + experiments A-D; --tune --robustness pass
   evaluate.py              # test-split bundle metrics + E gate

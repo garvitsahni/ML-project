@@ -125,6 +125,7 @@ def main() -> int:
                 model=model, feature_names=list(cols), algorithm=algo,
                 trained_at=now_iso(), n_train=int(len(split.train)),
                 metrics=entry["test_metrics"], threshold=float(entry["threshold"]),
+                schema_fingerprint=schema.fingerprint,
             )
             path = save_bundle(bundle, args.models_dir / f"{algo}.joblib")
             print(f"[train] saved tuned {path} (threshold={entry['threshold']}, "
@@ -141,6 +142,7 @@ def main() -> int:
                 model=ens, feature_names=list(cols), algorithm="ensemble",
                 trained_at=now_iso(), n_train=int(len(split.train)),
                 metrics=final["test_metrics"], threshold=float(final["threshold"]),
+                schema_fingerprint=schema.fingerprint,
             )
             path = save_bundle(bundle, args.models_dir / "ensemble.joblib")
             ensemble_json = {
@@ -170,6 +172,7 @@ def main() -> int:
         bundle = ModelBundle(
             model=model, feature_names=list(cols), algorithm=algo,
             trained_at=now_iso(), n_train=int(len(split.train)), metrics=test_metrics,
+            schema_fingerprint=schema.fingerprint,
         )
         path = save_bundle(bundle, args.models_dir / f"{algo}.joblib")
         print(f"[train] saved {path} (train={len(split.train)} windows, "

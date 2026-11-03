@@ -34,15 +34,22 @@ def test_tune_model_returns_fitted_pipeline_and_params(separable_groups):
 
 
 def test_tune_model_group_cv_holds_out_groups():
-    """A group-only memorizer must not score perfectly under grouped CV."""
-    rng = np.random.default_rng(3)
-    groups = np.repeat(np.arange(6), 10)
-    # label = group parity: learnable per-group, not across groups
-    y = np.tile([g % 2 for g in range(6)], 10).astype(int)
-    X = rng.normal(size=(60, 5))
-    X[:, 0] = groups % 2 + rng.normal(scale=0.05, size=60)  # leaky-ish feature
+    """A group-only memorizer must not score perfectly under grouped CV.
+
+    Labels are group-constant and features are group one-hots: a model can
+    only fit them by memorising seen groups. Under grouped CV the held-out
+    group's one-hot column never activates during fit -> constant predictions
+    -> AUC 0.5; frame-level CV would leak the same group into train and score
+    1.0, so `< 1.0` genuinely discriminates the two schemes.
+    """
+    n_groups, per_group = 8, 10
+    groups = np.repeat(np.arange(n_groups), per_group)
+    # group-constant labels: first half 0, second half 1 (every GroupKFold
+    # fold below holds >=2 groups spanning both halves -> finite AUC)
+    y = (np.arange(n_groups) >= n_groups // 2).astype(int)[groups]
+    X = np.eye(n_groups)[groups]  # memorization-only: zero cross-group signal
     _, _, cv_auc = tune_model("logreg", X, y, groups, seed=42)
-    assert cv_auc < 1.0  # grouped CV withholds whole groups
+    assert np.isfinite(cv_auc) and cv_auc < 1.0  # grouped CV withholds groups
 
 
 def test_tune_model_unknown_algorithm_raises(separable_groups):

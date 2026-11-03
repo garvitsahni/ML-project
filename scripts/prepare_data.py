@@ -28,6 +28,7 @@ def main() -> int:
     from src.datasets.ucsd_anomaly import UcsdAdapter
     from src.detection.detector import PersonDetector
     from src.features.pipeline import WindowConfig, build_feature_table
+    from src.features.schema import FeatureSchema
     from src.config import load_experiment_config
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -85,6 +86,7 @@ def main() -> int:
         "grid": args.grid,
         "detection_conf": det_conf,
         "detection_imgsz": det_imgsz,
+        "schema_fingerprint": FeatureSchema.default().fingerprint,
         "label_counts": {str(k): int(v) for k, v in df["label"].value_counts().items()},
         "split_sequence_counts": {
             str(k): int(v) for k, v in df.groupby("split")["sequence_id"].nunique().items()
