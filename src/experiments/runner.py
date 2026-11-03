@@ -187,6 +187,43 @@ def algorithm_comparison(df: pd.DataFrame, config: ExperimentConfig) -> Experime
     return result
 
 
+def label_robustness_experiment(df: pd.DataFrame, config: ExperimentConfig) -> dict:
+    """AUC/F1 under any-frame vs stricter (>=20% anomalous frames) labels.
+
+    VAL split only — the test split is never read here (spec Goal 3).
+    A different label definition: NOT comparable to test headline numbers.
+    """
+    if "label_frac" not in df.columns:
+        raise ValueError(
+            "label_frac missing; rebuild the feature table with prepare_data.py"
+        )
+    cols = _schema_columns(df)
+    split = _split_frame(df, config)
+    algo = config.algorithms[0]
+    X = df[cols].iloc[split.val]
+    y_any = df["label"].to_numpy()[split.val]
+    y_strict = (df["label_frac"].to_numpy()[split.val] >= 0.2).astype(int)
+
+    model = train_model(algo, df[cols].iloc[split.train],
+                        df["label"].to_numpy()[split.train], seed=config.seed)
+    score = model.predict_proba(X)[:, 1] if hasattr(model, "predict_proba") else None
+
+    variants = {}
+    for name, y in (("any_frame", y_any), ("strict_frac_0.2", y_strict)):
+        pred = (score >= 0.5).astype(int) if score is not None else model.predict(X)
+        variants[name] = compute_binary_metrics(y, pred, score)
+
+    out = {
+        "algorithm": algo,
+        "variants": variants,
+        "val_sequence_ids": sorted(set(df["sequence_id"].iloc[split.val])),
+        "note": "val split only; different label definition — "
+                "not comparable to test headline",
+    }
+    _write_json(config.results_dir / "experiment_label_robustness.json", out)
+    return out
+
+
 def run_experiment_suite(
     table: pd.DataFrame,
     results_dir: Path,

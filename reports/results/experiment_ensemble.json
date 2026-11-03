@@ -1,0 +1,44 @@
+{
+  "members": [
+    {
+      "algorithm": "rf",
+      "val_auc": 0.8743250688705234
+    },
+    {
+      "algorithm": "svm",
+      "val_auc": 0.8682460973370064
+    },
+    {
+      "algorithm": "xgb",
+      "val_auc": 0.8611019283746556
+    }
+  ],
+  "threshold": 0.2,
+  "test_metrics": {
+    "accuracy": 0.6141414141414141,
+    "precision": 0.4714285714285714,
+    "recall": 0.553072625698324,
+    "f1": 0.5089974293059126,
+    "n_samples": 495,
+    "n_positive": 179,
+    "n_negative": 316,
+    "roc_auc": 0.6705324941659005
+  },
+  "test_sequence_ids": [
+    "ped1_Test003",
+    "ped1_Test019",
+    "ped1_Test022",
+    "ped1_Test025",
+    "ped1_Test026",
+    "ped1_Test028",
+    "ped1_Test034",
+    "ped1_Train004",
+    "ped1_Train005",
+    "ped1_Train015",
+    "ped1_Train016",
+    "ped1_Train022",
+    "ped2_Test010",
+    "ped2_Train014",
+    "ped2_Train015"
+  ]
+}

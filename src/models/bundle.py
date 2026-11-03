@@ -24,6 +24,10 @@ class ModelBundle:
     trained_at: str
     n_train: int
     metrics: dict
+    threshold: float = 0.5  # decision threshold on P(anomaly)
+    # sha256 of the full schema the trainer validated against (None for
+    # legacy bundles saved before fingerprints -> exact-schema rule)
+    schema_fingerprint: str | None = None
 
 
 def save_bundle(bundle: ModelBundle, path: Path | str) -> Path:
@@ -38,6 +42,8 @@ def save_bundle(bundle: ModelBundle, path: Path | str) -> Path:
             "trained_at": bundle.trained_at,
             "n_train": bundle.n_train,
             "metrics": dict(bundle.metrics),
+            "threshold": float(bundle.threshold),
+            "schema_fingerprint": bundle.schema_fingerprint,
         },
         path,
     )
@@ -67,6 +73,8 @@ def load_bundle(path: Path | str) -> ModelBundle:
         trained_at=str(data.get("trained_at", "")),
         n_train=int(data.get("n_train", 0)),
         metrics=dict(data.get("metrics") or {}),
+        threshold=float(data.get("threshold", 0.5)),
+        schema_fingerprint=data.get("schema_fingerprint"),
     )
 
 

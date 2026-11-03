@@ -1,0 +1,163 @@
+{
+  "results": [
+    {
+      "conf": 0.05,
+      "imgsz": 320,
+      "mean_detections_per_frame": 14.775,
+      "mean_seconds_per_frame": 0.14291963499999838,
+      "projected_rebuild_hours": 0.7368301182222139,
+      "overlay_files": [
+        "conf0.05_imgsz320_frame0.png",
+        "conf0.05_imgsz320_frame1.png",
+        "conf0.05_imgsz320_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.05,
+      "imgsz": 640,
+      "mean_detections_per_frame": 16.4,
+      "mean_seconds_per_frame": 0.1714124600053765,
+      "projected_rebuild_hours": 0.8837264604721632,
+      "overlay_files": [
+        "conf0.05_imgsz640_frame0.png",
+        "conf0.05_imgsz640_frame1.png",
+        "conf0.05_imgsz640_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.05,
+      "imgsz": 1280,
+      "mean_detections_per_frame": 19.875,
+      "mean_seconds_per_frame": 0.42965388500742846,
+      "projected_rebuild_hours": 2.215104473816076,
+      "overlay_files": [
+        "conf0.05_imgsz1280_frame0.png",
+        "conf0.05_imgsz1280_frame1.png",
+        "conf0.05_imgsz1280_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.1,
+      "imgsz": 320,
+      "mean_detections_per_frame": 11.125,
+      "mean_seconds_per_frame": 0.09077602000179467,
+      "projected_rebuild_hours": 0.46800081423147477,
+      "overlay_files": [
+        "conf0.10_imgsz320_frame0.png",
+        "conf0.10_imgsz320_frame1.png",
+        "conf0.10_imgsz320_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.1,
+      "imgsz": 640,
+      "mean_detections_per_frame": 12.9,
+      "mean_seconds_per_frame": 0.14435517500241984,
+      "projected_rebuild_hours": 0.7442311244569202,
+      "overlay_files": [
+        "conf0.10_imgsz640_frame0.png",
+        "conf0.10_imgsz640_frame1.png",
+        "conf0.10_imgsz640_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.1,
+      "imgsz": 1280,
+      "mean_detections_per_frame": 14.925,
+      "mean_seconds_per_frame": 0.3833505249931477,
+      "projected_rebuild_hours": 1.9763849288535615,
+      "overlay_files": [
+        "conf0.10_imgsz1280_frame0.png",
+        "conf0.10_imgsz1280_frame1.png",
+        "conf0.10_imgsz1280_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.15,
+      "imgsz": 320,
+      "mean_detections_per_frame": 9.375,
+      "mean_seconds_per_frame": 0.08145482750260272,
+      "projected_rebuild_hours": 0.4199448884578629,
+      "overlay_files": [
+        "conf0.15_imgsz320_frame0.png",
+        "conf0.15_imgsz320_frame1.png",
+        "conf0.15_imgsz320_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.15,
+      "imgsz": 640,
+      "mean_detections_per_frame": 11.725,
+      "mean_seconds_per_frame": 0.14232730499497848,
+      "projected_rebuild_hours": 0.7337763279741113,
+      "overlay_files": [
+        "conf0.15_imgsz640_frame0.png",
+        "conf0.15_imgsz640_frame1.png",
+        "conf0.15_imgsz640_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.15,
+      "imgsz": 1280,
+      "mean_detections_per_frame": 13.175,
+      "mean_seconds_per_frame": 0.4337718824957847,
+      "projected_rebuild_hours": 2.2363350386449343,
+      "overlay_files": [
+        "conf0.15_imgsz1280_frame0.png",
+        "conf0.15_imgsz1280_frame1.png",
+        "conf0.15_imgsz1280_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.25,
+      "imgsz": 320,
+      "mean_detections_per_frame": 7.475,
+      "mean_seconds_per_frame": 0.1037707399998908,
+      "projected_rebuild_hours": 0.5349958151105481,
+      "overlay_files": [
+        "conf0.25_imgsz320_frame0.png",
+        "conf0.25_imgsz320_frame1.png",
+        "conf0.25_imgsz320_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.25,
+      "imgsz": 640,
+      "mean_detections_per_frame": 10.25,
+      "mean_seconds_per_frame": 0.18769725500460482,
+      "projected_rebuild_hours": 0.9676836258015181,
+      "overlay_files": [
+        "conf0.25_imgsz640_frame0.png",
+        "conf0.25_imgsz640_frame1.png",
+        "conf0.25_imgsz640_frame2.png"
+      ]
+    },
+    {
+      "conf": 0.25,
+      "imgsz": 1280,
+      "mean_detections_per_frame": 11.45,
+      "mean_seconds_per_frame": 0.3694591099978425,
+      "projected_rebuild_hours": 1.9047669670999878,
+      "overlay_files": [
+        "conf0.25_imgsz1280_frame0.png",
+        "conf0.25_imgsz1280_frame1.png",
+        "conf0.25_imgsz1280_frame2.png"
+      ]
+    }
+  ],
+  "selected": {
+    "conf": 0.05,
+    "imgsz": 640,
+    "mean_detections_per_frame": 16.4,
+    "mean_seconds_per_frame": 0.1714124600053765,
+    "projected_rebuild_hours": 0.8837264604721632,
+    "overlay_files": [
+      "conf0.05_imgsz640_frame0.png",
+      "conf0.05_imgsz640_frame1.png",
+      "conf0.05_imgsz640_frame2.png"
+    ]
+  },
+  "selection_rule": "highest mean_detections_per_frame among configs projecting a full rebuild <= 2.0h; ties break toward faster config",
+  "n_frames_sampled": 40,
+  "honesty": "detections are detector estimates; no counting ground truth exists"
+}

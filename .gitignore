@@ -17,9 +17,6 @@ data/processed/
 *.pt
 models/*.joblib
 
-# Streamlit
-.streamlit/secrets.toml
-
 # IDE / OS
 .vscode/
 .idea/
@@ -34,4 +31,11 @@ app_uploads/
 # Logs
 reports/results/*.log
 reports/results/*.err
+reports/*.log
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+backend/static/
+
 .superpowers/

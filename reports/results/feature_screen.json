@@ -1,0 +1,40 @@
+{
+  "threshold": 0.9,
+  "per_feature": {
+    "nn_distance_mean": {
+      "max_abs_spearman": 0.7709,
+      "most_correlated_with": "track_count"
+    },
+    "nn_distance_std": {
+      "max_abs_spearman": 0.5555,
+      "most_correlated_with": "density_per_mpx"
+    },
+    "abrupt_stop_fraction": {
+      "max_abs_spearman": 0.3688,
+      "most_correlated_with": "speed_std_pxf"
+    },
+    "direction_reversal_rate": {
+      "max_abs_spearman": 0.52,
+      "most_correlated_with": "direction_entropy"
+    },
+    "fast_mover_fraction": {
+      "max_abs_spearman": 0.4852,
+      "most_correlated_with": "speed_std_pxf"
+    },
+    "speed_p90": {
+      "max_abs_spearman": 0.8814,
+      "most_correlated_with": "mean_speed_pxf"
+    },
+    "track_turnover_rate": {
+      "max_abs_spearman": 0.8994,
+      "most_correlated_with": "track_count"
+    },
+    "flow_direction_inconsistency": {
+      "max_abs_spearman": 0.6733,
+      "most_correlated_with": "directional_consistency"
+    }
+  },
+  "flagged": {},
+  "exclude_features_flag": "",
+  "note": "flagged candidates are excluded from bundle feature sets via train_ml.py --exclude-features; they stay in the schema/table; screened on train+val rows only (grouped_split seed=42, test sequences excluded)"
+}

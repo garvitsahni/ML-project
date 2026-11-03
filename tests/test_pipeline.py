@@ -45,10 +45,11 @@ def test_rows_schema_columns(fixture_root):
     seq = _seq(fixture_root, "ped1_Test001")
     rows = process_sequence(seq, detector=MovingFakeDetector(),
                             config=WindowConfig(window=4, stride=2, grid_size=2))
+    from src.features.pipeline import META_COLUMNS
+
     schema = FeatureSchema.default()
-    expected_meta = {"sequence_id", "part", "split", "window_start", "window_end", "label"}
-    assert expected_meta.issubset(rows[0].keys())
-    assert [c for c in rows[0] if c not in expected_meta] == schema.names
+    assert set(META_COLUMNS).issubset(rows[0].keys())
+    assert [c for c in rows[0] if c not in META_COLUMNS] == schema.names
 
 
 def test_window_labels_from_gt(fixture_root):
@@ -57,6 +58,17 @@ def test_window_labels_from_gt(fixture_root):
     rows = process_sequence(seq, detector=MovingFakeDetector(),
                             config=WindowConfig(window=4, stride=2, grid_size=2))
     assert [r["label"] for r in rows] == [1, 1, 1, 0]
+
+
+def test_label_frac_per_window(fixture_root):
+    # GT range [3:5] (1-based) parses to 0-based frames 2,3,4 anomalous;
+    # windows [0,4),[2,6),[4,8),[6,10) -> 2/4, 3/4, 1/4, 0/4
+    seq = _seq(fixture_root, "ped1_Test001")
+    rows = process_sequence(seq, detector=MovingFakeDetector(),
+                            config=WindowConfig(window=4, stride=2, grid_size=2))
+    assert [r["label_frac"] for r in rows] == [
+        pytest.approx(0.5), pytest.approx(0.75), pytest.approx(0.25), pytest.approx(0.0)
+    ]
 
 
 def test_train_windows_all_normal(fixture_root):
@@ -102,7 +114,6 @@ def test_build_feature_table_all_sequences(fixture_root):
     assert len(df) == 1 + 1 + 3 + 2 + 1 + 1  # (n-window)//stride + 1 per sequence
     assert set(df["split"]) == {"train", "test"}
     assert df["label"].isin([0, 1]).all()
-    assert list(FeatureSchema.default().names) == [
-        c for c in df.columns if c not in
-        {"sequence_id", "part", "split", "window_start", "window_end", "label"}
-    ]
+    from src.features.pipeline import META_COLUMNS
+
+    assert list(df.columns) == META_COLUMNS + list(FeatureSchema.default().names)

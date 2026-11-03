@@ -3,8 +3,8 @@
 **Research question:** *Do temporal crowd-movement features improve anomaly
 prediction over static crowd-density features alone?*
 
-Everything in this repository is computed from real data — the dashboard only
-renders files that exist under `reports/`, and no metric is ever fabricated,
+Everything in this repository is computed from real data — the API and web UI
+only present values produced by the pipeline, and no metric is ever fabricated,
 rounded up, or reported without its provenance.
 
 > Environment: Python 3.13 (Windows), CPU-only (torch 2.9.0+cpu — no CUDA).
@@ -15,27 +15,48 @@ rounded up, or reported without its provenance.
 # 1. Dependencies (verified environment; requirements.txt lists them)
 python -m pip install -r requirements.txt
 
-# 2. Tests (TDD suite: ~184 tests)
-#    Prefer the wrapper — it pins native thread pools to 1 and avoids
-#    intermittent OpenMP access-violation crashes on Windows:
+# 2. Tests (TDD suite; wrapper pins native thread pools to 1 to avoid
+#    intermittent OpenMP access-violation crashes on Windows)
 powershell -ExecutionPolicy Bypass -File scripts\run_tests.ps1
 #    (plain `python -m pytest tests/ -q` usually works too, but can flake)
 
 # 3. Inspect the dataset (graceful when absent)
 python scripts/inspect_dataset.py
 
-# 4. Build the sliding-window feature table  (CPU-heavy: ~1-2 ms/frame overhead
+# 4. Detector calibration (40 sampled frames; pre-declared rule: most
+#    detections under a 2h rebuild budget -> conf=0.05, imgsz=640)
+python scripts/calibrate_detection.py
+
+# 5. Build the sliding-window feature table  (CPU-heavy: ~1-2 ms/frame overhead
 #    on top of YOLO; full UCSD takes on the order of an hour)
 python scripts/prepare_data.py
 
-# 5. Train the five models + run experiments A-D
+# 6. Train the five models + run experiments A-D
 python scripts/train_ml.py
+#    Accuracy pass — grouped-CV tuning + val thresholds + soft-vote ensemble +
+#    label robustness; the four pre-declared test runs land in
+#    experiment_attribution.json (config 3 records every tuned algorithm,
+#    selected by val AUC):
+python scripts/train_ml.py --tune --robustness
+#    (Standalone equivalent of the attribution step — run EITHER this OR the
+#    --tune command above, never both, so test is evaluated once per config:)
+# python scripts/attribution.py
+#    Redundancy screen of the schema-v2 features (Spearman vs original 15,
+#    computed on train/val rows only):
+python scripts/screen_features.py
 
-# 6. Evaluate bundles on the held-out test split (+ Experiment E gate status)
+# 7. Evaluate bundles on the held-out test split (+ Experiment E gate status)
 python scripts/evaluate.py
 
-# 7. Dashboard
-python -m streamlit run app.py
+# 8. Web app (React SPA + FastAPI)
+#    Build the SPA once (outputs to backend/static/), then serve app + API:
+cd frontend
+npm install
+npm run build
+cd ..
+python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
+#    Open http://127.0.0.1:8000 — Photo Analysis, Video Analysis, Live Camera.
+#    For frontend hot-reload, run `npm run dev` (Vite proxies /api to :8000).
 ```
 
 Smoke variants (seconds instead of an hour):
@@ -98,6 +119,11 @@ Method guarantees:
 - **Units** are px/frame at processed resolution — never m/s (no scale).
 - Metrics are computed on the held-out **test** split; undefined metrics are
   `null`, never invented (e.g. ROC AUC with one class present).
+- **Capped test evaluation (accuracy effort)** — four *new* pre-declared
+  configurations were evaluated on test, each logged with provenance in
+  `experiment_attribution.json`; the pre-existing A–D suite also reports
+  test metrics but drives no selection decision. Feature screening,
+  thresholds, and ensemble membership all use train/val data only.
 
 ## Limitations (read before citing anything)
 
@@ -107,8 +133,12 @@ Method guarantees:
 3. **No congestion labels** — Experiment E is hard-gated off.
 4. **Speeds are px/frame** — no scene-scale calibration, so no m/s conversion.
 5. **Anomaly labels are frame-level** — window labels inherit "any frame" logic.
-6. **YOLOv8n confidence is not calibrated** — counts are estimates (±),
-   fine for relative features, not absolute occupancy claims.
+6. **Detector defaults are a calibrated choice, not a truth** — a 40-frame
+   grid (`calibrate_detection.py`) selected **conf=0.05 / imgsz=640** by the
+   pre-declared rule "most detections under a 2h rebuild" (16.40 vs 10.25
+   boxes/frame at the old conf=0.25): recall over detector precision.
+   Counts remain estimates (±) — fine for relative features, not absolute
+   occupancy claims.
 
 ## Artifacts map
 
@@ -116,45 +146,100 @@ Method guarantees:
 data/processed/
 └── ucsd_windows.parquet + .meta.json   # feature table (gitignored, regenerable)
 models/
-└── {logreg,dt,rf,svm,xgb}.joblib       # schema-versioned bundles (gitignored)
+└── {logreg,dt,rf,svm,xgb,ensemble}.joblib  # tuned bundles + val thresholds (gitignored)
 reports/
+├── detection_calibration/
+│   └── calibration.json + overlays     # conf/imgsz grid, selection rule, audit frames
 ├── results/
+│   ├── experiment_attribution.json     # FOUR pre-declared runs -> headline table
+│   ├── experiment_tuning.json          # grouped-CV params + val thresholds per algo
+│   ├── experiment_ensemble.json        # soft-vote members (by val AUC) + val/test
+│   ├── experiment_label_robustness.json# val-only stricter labels (never test)
 │   ├── experiment_ablation.json        # A/B/C per algorithm (val+test)
 │   ├── experiment_algorithms.json      # D comparison
-│   ├── evaluation.json                 # bundle test metrics
+│   ├── feature_screen.json             # Spearman redundancy screen (exclusions)
+│   ├── evaluation.json                 # bundle test metrics (evaluate.py)
 │   └── exp_e_status.json               # E gate status
 └── figures/*.png                       # confusion/ROC/importance (test split)
 ```
 
-## Headline results (full UCSD, seed 42, 68 train / 15 test sequences, 495 test windows)
+## Headline results — four pre-declared runs (full UCSD, seed 42)
 
-Honest test-split numbers — movement features help on every algorithm:
+Provenance: 98 sequences → 3222 windows (30 frames, stride 5) from the
+calibrated detector (YOLOv8n conf=0.05, imgsz=640 → 16.40 boxes/frame);
+grouped split by sequence id — **68 train / 15 val / 15 test, disjoint**
+(seed 42) — test = 495 windows (179 anomalous). Each pre-declared
+configuration is evaluated on test inside `src/experiments/attribution.py`
+(config 3 records every tuned algorithm and selects by **val** AUC); every
+threshold, hyperparameter, and ensemble-membership decision used train-side
+GroupKFold CV or the val split only. Source: `reports/results/experiment_attribution.json`.
 
-| algorithm | A static only (AUC/F1) | B movement only | C static+movement | C − A (AUC) |
-|-----------|------------------------|-----------------|-------------------|-------------|
-| logreg    | 0.460 / 0.165 | 0.634 / 0.487 | **0.675 / 0.517** | **+0.214** |
-| svm       | 0.407 / 0.192 | 0.643 / 0.419 | 0.651 / 0.424 | **+0.245** |
-| xgb       | 0.436 / 0.309 | 0.623 / 0.424 | 0.602 / 0.373 | +0.166 |
-| rf        | 0.423 / 0.260 | 0.627 / 0.438 | 0.582 / 0.360 | +0.159 |
-| dt        | 0.406 / 0.259 | 0.558 / 0.414 | 0.519 / 0.348 | +0.113 |
+| # | config (selection rule) | features | threshold | test AUC | test F1 |
+|---|-------------------------|----------|-----------|----------|---------|
+| 1 | baseline — original 15 features, logreg, untuned | 15 | 0.50 | 0.6677 | 0.5068 |
+| 2 | + schema-v2 movement features, logreg, untuned | 23 | 0.50 | 0.6475 | 0.4892 |
+| 3 | + grouped-CV tuning + val threshold (rf; best by **val** AUC) | 23 | 0.25 | **0.6714** | **0.5311** |
+| 4 | + soft-vote ensemble rf+svm+xgb (members by **val** AUC) | 23 | 0.20 | 0.6705 | 0.5090 |
 
-Interpretation: static density alone is near-chance for frame-window anomaly
-prediction; temporal movement features carry the signal (best absolute AUC is
-still a modest 0.675 — sequence-held-out anomaly detection on UCSD is hard).
-Reproduce with the Quick start commands; every number above is stored in
-`reports/results/*.json` with its split membership.
+Before → after against the previous headline (same grouped splits, older
+conf=0.25 detector table): **AUC 0.675 → 0.6714, F1 0.517 → 0.5311.**
+
+**Honest outcome: the ≥ 0.75 AUC goal was not met — the ceiling held at
+~0.67.** What the four runs show:
+
+- static density alone is near-chance (AUC 0.43–0.56 across algorithms);
+  movement features carry the signal (ablation below);
+- the calibrated detector (16.40 vs 10.25 boxes/frame) did **not** lift the
+  old-15 baseline by itself (0.6677 vs 0.675);
+- the 8 new schema-v2 features *hurt* untuned (run 2 < run 1) and only pay
+  off with grouped-CV tuning + a val-chosen threshold (run 3 = best);
+- the ensemble did not beat the tuned single model (run 4 < run 3).
+
+Sequence-held-out window-level anomaly detection on UCSD with a CPU-only
+detector thus plateaus near AUC 0.67 on these splits; this effort's gain is
+in F1 (0.517 → 0.5311, val-tuned threshold). Reproduce with the Quick start
+commands; every number above is stored in `reports/results/*.json` with its
+split membership.
+
+### Ablation — experiments A–C (calibrated-detector table, threshold 0.5)
+
+| algorithm | A static only (6 feat) | B movement only (17 feat) | C static+movement (23 feat) | C − A (AUC) |
+|-----------|------------------------|---------------------------|-----------------------------|-------------|
+| logreg    | 0.505 / 0.159 | 0.653 / 0.490 | 0.648 / 0.489 | +0.142 |
+| svm       | 0.427 / 0.162 | 0.665 / 0.386 | **0.682 / 0.429** | **+0.255** |
+| xgb       | 0.499 / 0.256 | 0.629 / 0.420 | 0.614 / 0.351 | +0.115 |
+| rf        | 0.470 / 0.267 | 0.635 / 0.385 | 0.671 / 0.376 | +0.202 |
+| dt        | 0.563 / 0.426 | 0.552 / 0.409 | 0.593 / 0.446 | +0.029 |
+
+Interpretation: static density alone is near-chance for frame-window
+anomaly prediction; temporal movement features improve AUC on **every**
+algorithm (C − A > 0 in all five rows) — the research question's answer is
+*yes, movement features help* — while the absolute ceiling stays modest
+(~0.67; sequence-held-out anomaly detection on UCSD is hard). Stored in
+`reports/results/experiment_ablation.json`.
 
 ## Project structure
 
 ```
-app.py                     # Streamlit shell (sidebar navigation)
+backend/                   # FastAPI app + SPA build output
+  app.py                   # routes: /api/health, /api/model, detect-image/video/frame
+  service.py               # upload decode -> src pipeline -> JSON
+  schemas.py               # typed response models
+  static/                  # `npm run build` output (gitignored)
+frontend/                  # React + TypeScript (Vite) SPA
+  src/pages/               # Photo Analysis, Video Analysis, Live Camera
+  src/components/          # nav, upload dropzone, results panels, model badge
+  src/lib/api.ts           # typed API client
 configs/
   paths.yaml               # dataset + report paths
   experiments.yaml         # seed, window/stride/grid, algorithms
 scripts/
   inspect_dataset.py       # dataset summary (graceful if absent)
+  calibrate_detection.py   # conf/imgsz grid on sampled frames (pre-declared rule)
   prepare_data.py          # frames -> window feature table (parquet)
-  train_ml.py              # bundles + experiments A-D
+  attribution.py           # the four pre-declared test-split runs (spec Goal 3)
+  screen_features.py       # Spearman redundancy screen for schema-v2 candidates
+  train_ml.py              # bundles + experiments A-D; --tune --robustness pass
   evaluate.py              # test-split bundle metrics + E gate
 src/
   config.py                # typed config loaders
@@ -165,61 +250,25 @@ src/
   features/                # schema, static, movement, window pipeline
   models/                  # grouped splits, 5 trainers, joblib bundles
   experiments/             # metrics + A-D runner (E gated)
-  inference/               # schema-strict InferenceService
+  inference/               # schema-strict InferenceService + presentation helpers
   visualization/           # Agg-backend PNG plots
-  ui/                      # 5 dashboard pages + shared design-system helpers
-tests/                     # TDD suite (~184 tests) + synthetic fixtures
+tests/                     # TDD suite + synthetic fixtures
 docs/superpowers/          # approved spec + plan
 ```
 
-## Dashboard (redesigned interface)
+## Web app (React + FastAPI)
 
-`python -m streamlit run app.py` starts the shell: branded sidebar →
-sectioned navigation → the selected page. Destinations only appear in the
-sidebar once implemented. Every number rendered by the dashboard is read
-from real files or computed live — nothing is fabricated, and no download
-is ever offered.
+Three tools only, each backed by the same pipeline the tests cover:
 
-**Workspace**
+- **Photo Analysis** — YOLOv8n person detection, annotated frame, 4×4 density
+  grid, and the six static features. No temporal claims from one frame.
+- **Video Analysis** — detect → ByteTrack → optical flow → 30-frame windows;
+  per-window anomaly scores appear only when a compatible trained bundle exists.
+- **Live Camera** — browser `getUserMedia` frames sent to `/api/detect-frame`
+  for single-frame detection. No anomaly score: one frame has no temporal
+  features.
 
-- **Overview** — three task choices (photo / video / camera), one quiet
-  live-status line (models, dataset, evaluation, runs this session — read
-  from disk), session history in a collapsed *This session* expander with
-  CSV download and clear-with-confirmation, and the quiet
-  *About the numbers* list.
-- **Photo Analysis** — three steps — upload, check, results: validation,
-  then explicit analyse → detection, spatial density grid, static
-  features. Temporal outputs are intentionally absent (one frame has no
-  window).
-- **Video Analysis** — three steps — upload, check, results: batched,
-  cancellable processing (24-frame batches; Cancel/Stop takes effect at
-  batch boundaries). Timeline charts, window-level model predictions,
-  annotated-frame strip, optional annotated video export, CSV/JSON
-  downloads.
-- **Live Camera** — rolling window over a camera device with measured
-  FPS/latency; the device is only opened on "Start capture" and always
-  released on stop/navigation. Without a device the page fails gracefully
-  with the real error message.
-
-**System**
-
-- **Settings** — session preferences (validated on save, applied to the
-  next analysis) and a whitelisted diagnostics panel (Python/Streamlit
-  versions, torch device, dataset/model/results presence — no paths, no
-  environment values, no secrets).
-
-### Session-only history
-
-Analysis history (Photo/Video/Camera runs) lives in the browser session and
-**is not persisted** — it disappears when the tab closes. Use Overview →
-"Download history CSV" to keep a copy. Settings are session-only too.
-
-### Settings (System → Settings)
-
-| Setting | Range / choices | Default | Effect |
-|---------|-----------------|---------|--------|
-| Detection confidence | 0.05–0.95 (step 0.05) | 0.25 | YOLO gate for counting a person (Photo/Video/Camera) |
-| Frame stride | 1–10 | 1 | Process every Nth video frame (Video) |
-| Max frames per video | 60–1200 | 300 | Hard cap per video run |
-| Processing resolution | 640 / 1280 / 1920 (long side px) | 1280 | Speed/quality on CPU (Video/Camera) |
-| Show density overlays | on / off | on | Density heatmap overlays (Photo/Camera) |
+Honesty rules visible in the UI: counts are detector estimates (no counting
+ground truth), speeds are px/frame (never m/s), missing model/metrics render as
+`—` rather than invented numbers, and every predictions block carries the model
+caveat.

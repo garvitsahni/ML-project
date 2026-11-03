@@ -11,6 +11,11 @@ import pytest
 
 from src.config import PROJECT_ROOT
 from src.detection.analyze import ImageAnalysis, analyze_frame, analyze_image
+from src.detection.calibration import (
+    project_rebuild_hours,
+    sample_frame_files,
+    select_config,
+)
 from src.detection.detector import (
     Detection,
     DetectionResult,
@@ -115,3 +120,61 @@ def test_density_grid_counts_centers():
     analysis = analyze_frame(frame, detector=fake, grid_size=4)
     assert analysis.grid_counts[0, 0] == 1
     assert analysis.grid_counts.sum() == 1
+
+
+# ------------------------------------------------------------- calibration
+def _result(conf, imgsz, dets_per_frame, sec_per_frame):
+    return {"conf": conf, "imgsz": imgsz,
+            "mean_detections_per_frame": dets_per_frame,
+            "mean_seconds_per_frame": sec_per_frame,
+            "projected_rebuild_hours": project_rebuild_hours(sec_per_frame),
+            "overlay_files": []}
+
+
+def test_project_rebuild_hours_arithmetic():
+    # 0.02 s/frame * 18560 frames = 371.2 s = 0.103... h
+    assert project_rebuild_hours(0.02) == pytest.approx(371.2 / 3600)
+
+
+def test_select_config_picks_highest_recall_within_budget():
+    results = [
+        _result(0.25, 640, 3.0, 0.02),   # fast, fewer detections
+        _result(0.10, 640, 7.0, 0.03),   # more detections, still within 2h
+        _result(0.05, 1280, 12.0, 0.50), # best recall but projects way over budget
+    ]
+    chosen = select_config(results, max_rebuild_hours=2.0)
+    assert chosen["conf"] == 0.10
+
+
+def test_select_config_excludes_over_budget():
+    over = _result(0.05, 1280, 20.0, 0.60)  # 18560*0.6/3600 = 3.1h
+    under = _result(0.25, 640, 3.0, 0.02)
+    assert select_config([over, under], max_rebuild_hours=2.0)["conf"] == 0.25
+
+
+def test_select_config_tie_breaks_toward_faster():
+    a = _result(0.10, 640, 5.0, 0.03)
+    b = _result(0.15, 640, 5.0, 0.01)  # same recall, faster
+    assert select_config([a, b], max_rebuild_hours=2.0)["conf"] == 0.15
+
+
+def test_select_config_all_over_budget_raises():
+    over = _result(0.05, 1280, 20.0, 0.60)
+    with pytest.raises(ValueError, match="budget"):
+        select_config([over], max_rebuild_hours=2.0)
+
+
+def test_sample_frame_files_deterministic_and_train_only(tmp_path):
+    from pathlib import Path
+
+    from src.datasets.ucsd_anomaly import UcsdAdapter
+    from tests.fixtures import make_ucsd_fixture
+
+    root = make_ucsd_fixture(tmp_path / "UCSD")
+    adapter = UcsdAdapter(root=root)
+    files1 = sample_frame_files(adapter, n_frames=4, seed=42)
+    files2 = sample_frame_files(adapter, n_frames=4, seed=42)
+    assert files1 == files2  # deterministic
+    assert len(files1) == 4
+    train_files = {f for s in adapter.iter_sequences(split="train") for f in s.frame_files}
+    assert all(f in train_files for f in files1)  # train split only

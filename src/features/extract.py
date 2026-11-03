@@ -9,9 +9,15 @@ import cv2
 import numpy as np
 
 from src.features.movement import (
+    abrupt_stop_fraction,
     directional_consistency,
     direction_entropy,
+    direction_reversal_rate,
+    fast_mover_fraction,
     movement_speeds_from_trajectories,
+    nearest_neighbor_stats,
+    speed_p90,
+    track_turnover_rate,
 )
 from src.features.schema import FeatureSchema
 from src.features.static import static_features
@@ -28,16 +34,26 @@ class FrameSignals:
     centers: np.ndarray  # (n, 2) xy pixels
     flow_mean: float  # Farneback mean magnitude vs previous frame (0 for first)
     flow_std: float
+    flow_dir_inconsistency: float = 0.0  # 1 - |mean unit flow dir| (0 for first)
 
 
-def optical_flow_stats(prev_gray: np.ndarray, gray: np.ndarray) -> tuple[float, float]:
-    """Farneback dense flow between two gray frames -> (mean, std) magnitude."""
+def optical_flow_stats(prev_gray: np.ndarray, gray: np.ndarray) -> tuple[float, float, float]:
+    """Farneback dense flow -> (mean magnitude, std magnitude, direction inconsistency).
+
+    Direction inconsistency = 1 - |mean unit direction| over pixels moving
+    > 0.5 px/frame; 0.0 when no qualifying pixels.
+    """
     flow = cv2.calcOpticalFlowFarneback(
         prev_gray, gray, None, pyr_scale=0.5, levels=3, winsize=15,
         iterations=3, poly_n=5, poly_sigma=1.2, flags=0,
     )
     mag = np.linalg.norm(flow, axis=2)
-    return float(mag.mean()), float(mag.std())
+    moving = mag > 0.5
+    if not moving.any():
+        return float(mag.mean()), float(mag.std()), 0.0
+    units = flow[moving] / mag[moving, None]
+    dir_inc = 1.0 - float(np.linalg.norm(units.mean(axis=0)))
+    return float(mag.mean()), float(mag.std()), dir_inc
 
 
 def _third_mean(values: np.ndarray) -> float:
@@ -89,12 +105,26 @@ def extract_window_features(
         feats["speed_std_pxf"] = float(speeds.std()) if speeds.size >= 2 else 0.0
     feats["direction_entropy"] = direction_entropy(store, track_ids)
     feats["directional_consistency"] = directional_consistency(store, track_ids)
+    feats["direction_reversal_rate"] = direction_reversal_rate(store, track_ids)
     feats["flow_mean_magnitude"] = float(np.mean([s.flow_mean for s in signals]))
     feats["flow_std_pxf"] = float(np.mean([s.flow_std for s in signals]))
+    feats["flow_direction_inconsistency"] = float(
+        np.mean([s.flow_dir_inconsistency for s in signals])
+    )
     feats["track_count"] = float(len(track_ids))
     if track_ids:
         feats["track_persistence"] = float(
             np.mean([store.persistence(tid) for tid in track_ids])
         )
+    feats["speed_p90"] = speed_p90(store, track_ids)
+    median_speed = float(np.median(speeds)) if speeds.size else 0.0
+    feats["abrupt_stop_fraction"] = abrupt_stop_fraction(store, track_ids, median_speed)
+    feats["fast_mover_fraction"] = fast_mover_fraction(store, track_ids, median_speed)
+    fmin, fmax = store.frame_range
+    feats["track_turnover_rate"] = track_turnover_rate(store, track_ids, fmin, fmax + 1)
+    centers_by_frame = {s.frame_index: s.centers for s in signals if s.centers.size >= 2}
+    feats["nn_distance_mean"], feats["nn_distance_std"] = nearest_neighbor_stats(
+        store, track_ids, centers_by_frame, image_diagonal=float(np.hypot(h, w))
+    )
 
     return feats

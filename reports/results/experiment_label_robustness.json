@@ -1,0 +1,43 @@
+{
+  "algorithm": "logreg",
+  "variants": {
+    "any_frame": {
+      "accuracy": 0.8097251585623678,
+      "precision": 0.9029850746268657,
+      "recall": 0.6111111111111112,
+      "f1": 0.7289156626506024,
+      "n_samples": 473,
+      "n_positive": 198,
+      "n_negative": 275,
+      "roc_auc": 0.8631772268135905
+    },
+    "strict_frac_0.2": {
+      "accuracy": 0.8181818181818182,
+      "precision": 0.8805970149253731,
+      "recall": 0.6276595744680851,
+      "f1": 0.7329192546583851,
+      "n_samples": 473,
+      "n_positive": 188,
+      "n_negative": 285,
+      "roc_auc": 0.875457260171706
+    }
+  },
+  "val_sequence_ids": [
+    "ped1_Test005",
+    "ped1_Test008",
+    "ped1_Test027",
+    "ped1_Test029",
+    "ped1_Train002",
+    "ped1_Train024",
+    "ped1_Train026",
+    "ped1_Train028",
+    "ped2_Test001",
+    "ped2_Test004",
+    "ped2_Test007",
+    "ped2_Test009",
+    "ped2_Train006",
+    "ped2_Train011",
+    "ped2_Train016"
+  ],
+  "note": "val split only; different label definition \u2014 not comparable to test headline"
+}
