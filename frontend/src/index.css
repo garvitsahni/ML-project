@@ -6,15 +6,28 @@
   color-scheme: light;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f7f6f3;
+  color: #17161a;
+}
+
+::selection {
+  background: #b4442e;
+  color: #f7f6f3;
 }
 
 code,
 pre {
   font-family: Consolas, 'Courier New', monospace;
+}
+
+summary::-webkit-details-marker {
+  display: none;
 }

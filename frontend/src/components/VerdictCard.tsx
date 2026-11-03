@@ -13,28 +13,41 @@ export function VerdictCard({ level, people, caption, compact = false }: Verdict
 
   return (
     <div
-      className={`rounded-2xl p-6 ring-1 ${info.panel}`}
+      className="rounded-xl border border-line bg-card p-6"
+      style={{ borderLeft: `3px solid ${info.hex}` }}
       role="status"
       aria-live="polite"
     >
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-faint">
         Crowd level
       </p>
       <p
-        className={`mt-1 font-black uppercase leading-none tracking-tight ${info.word_class} ${
-          compact ? 'text-4xl' : 'text-5xl sm:text-6xl'
-        }`}
+        className={`mt-1 font-black uppercase leading-[0.95] tracking-[-0.035em] ${
+          info.word_class
+        } ${compact ? 'text-4xl' : 'text-5xl sm:text-6xl'}`}
       >
         {info.word}
       </p>
-      <p className="mt-3 text-base text-slate-700">
-        About <span className="font-semibold tabular-nums text-slate-900">{shown}</span>{' '}
-        {shown === 1 ? 'person' : 'people'}
-        <span className="text-slate-500"> (estimate)</span>
+      {caption && <p className="mt-1.5 text-sm text-muted">{caption}</p>}
+      <p className="mt-3 text-base text-ink">
+        About <span className="font-bold tabular-nums">{shown}</span>{' '}
+        {shown === 1 ? 'person' : 'people'}{' '}
+        <span className="text-faint">(estimate)</span>
       </p>
-      {caption && <p className="mt-1 text-sm text-slate-500">{caption}</p>}
-      <p className="mt-3 text-sm text-slate-600">{info.meaning}</p>
-      <p className="mt-4 border-t border-slate-900/10 pt-3 text-xs text-slate-500">
+      <p className="mt-3 text-sm text-muted">{info.meaning}</p>
+
+      <div className="mt-4 flex gap-1" aria-hidden>
+        {[0, 1, 2].map((step) => (
+          <span
+            key={step}
+            className={`h-1.5 flex-1 rounded-full ${
+              step === info.index ? info.bar : 'bg-soft'
+            }`}
+          />
+        ))}
+      </div>
+
+      <p className="mt-3 border-t border-soft pt-3 text-xs text-faint">
         {crowdRuleText()}
       </p>
     </div>

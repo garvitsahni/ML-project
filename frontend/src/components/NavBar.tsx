@@ -1,20 +1,20 @@
 import { NavLink } from 'react-router-dom'
 
 const links = [
-  { to: '/', label: 'Photo', icon: '🖼️' },
-  { to: '/video', label: 'Video', icon: '🎬' },
-  { to: '/live-camera', label: 'Camera', icon: '📹' },
+  { to: '/', label: 'Photo' },
+  { to: '/video', label: 'Video' },
+  { to: '/live-camera', label: 'Camera' },
 ]
 
 export default function NavBar() {
   return (
-    <header className="border-b border-slate-200 bg-white shadow-sm">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-10 border-b border-line bg-paper/90 backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <NavLink to="/" className="flex min-w-0 items-center gap-2">
-          <span className="text-xl" aria-hidden>
+          <span className="text-lg" aria-hidden>
             👥
           </span>
-          <span className="truncate text-lg font-bold tracking-tight text-slate-900">
+          <span className="truncate text-[15px] font-bold tracking-tight text-ink">
             CrowdSense
           </span>
         </NavLink>
@@ -26,16 +26,13 @@ export default function NavBar() {
               end={link.to === '/'}
               className={({ isActive }) =>
                 [
-                  'rounded-md px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm',
+                  'rounded-md px-3 py-1.5 text-sm transition-colors',
                   isActive
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                    ? 'bg-ink font-semibold text-paper'
+                    : 'text-muted hover:bg-soft hover:text-ink',
                 ].join(' ')
               }
             >
-              <span className="mr-1" aria-hidden>
-                {link.icon}
-              </span>
               {link.label}
             </NavLink>
           ))}

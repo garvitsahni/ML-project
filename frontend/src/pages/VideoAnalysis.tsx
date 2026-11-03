@@ -55,18 +55,21 @@ export default function VideoAnalysis() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
+          Video analysis
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           How crowded is this video?
         </h1>
-        <p className="mt-1 text-slate-600">
+        <p className="mt-2 max-w-xl text-muted">
           Upload a short clip. We count people over time and show how the crowd changes.
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <div className="grid gap-8 lg:grid-cols-2">
+        <section className="space-y-5 self-start rounded-xl border border-line bg-card p-6">
           <UploadDropzone
             file={file}
             onFileSelect={handleFile}
@@ -79,7 +82,7 @@ export default function VideoAnalysis() {
             <video
               src={previewUrl}
               controls
-              className="w-full rounded-lg bg-black ring-1 ring-slate-200"
+              className="w-full rounded-lg border border-line bg-black"
             />
           )}
 
@@ -87,19 +90,19 @@ export default function VideoAnalysis() {
             type="button"
             onClick={handleAnalyze}
             disabled={!file || loading}
-            className="w-full rounded-lg bg-brand-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="w-full rounded-lg bg-ink px-4 py-3 text-base font-semibold text-paper transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-soft disabled:text-faint"
           >
             {loading ? 'Checking the clip…' : 'Check crowd level'}
           </button>
           {loading && (
-            <p className="text-center text-xs text-slate-500">
+            <p className="text-center text-xs text-faint">
               This can take a few seconds. Keep this tab open.
             </p>
           )}
 
           <Details summary="Advanced settings">
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-ink">
                 Detector sensitivity ({conf.toFixed(2)})
               </span>
               <input
@@ -109,18 +112,18 @@ export default function VideoAnalysis() {
                 step={0.01}
                 value={conf}
                 onChange={(event) => setConf(Number(event.target.value))}
-                className="mt-2 w-full accent-brand-600"
+                className="mt-2 w-full accent-ink"
               />
-              <span className="mt-1 block text-xs text-slate-500">
+              <span className="mt-1 block text-xs leading-relaxed text-faint">
                 Lower finds more people, including ones it is unsure about.
               </span>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Image size</span>
+              <span className="font-medium text-ink">Image size</span>
               <select
                 value={imgsz}
                 onChange={(event) => setImgsz(Number(event.target.value))}
-                className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2"
+                className="mt-2 w-full rounded-md border border-line bg-card px-3 py-2 text-ink"
               >
                 <option value={320}>Small (fast)</option>
                 <option value={640}>Normal</option>
@@ -128,7 +131,7 @@ export default function VideoAnalysis() {
               </select>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-ink">
                 How much of the clip to check ({maxFrames} frames)
               </span>
               <input
@@ -138,14 +141,14 @@ export default function VideoAnalysis() {
                 step={10}
                 value={maxFrames}
                 onChange={(event) => setMaxFrames(Number(event.target.value))}
-                className="mt-2 w-full accent-brand-600"
+                className="mt-2 w-full accent-ink"
               />
-              <span className="mt-1 block text-xs text-slate-500">
+              <span className="mt-1 block text-xs leading-relaxed text-faint">
                 Checking more frames takes longer but covers more of the clip.
               </span>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-ink">
                 Skip frames between checks ({stride})
               </span>
               <input
@@ -155,28 +158,28 @@ export default function VideoAnalysis() {
                 step={1}
                 value={stride}
                 onChange={(event) => setStride(Number(event.target.value))}
-                className="mt-2 w-full accent-brand-600"
+                className="mt-2 w-full accent-ink"
               />
-              <span className="mt-1 block text-xs text-slate-500">
+              <span className="mt-1 block text-xs leading-relaxed text-faint">
                 Higher is faster but coarser. Leave at 1 for the best detail.
               </span>
             </label>
           </Details>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs leading-relaxed text-faint">
             Runs on this computer. The clip is not sent to the internet. A clip needs at
             least 30 frames to produce a result.
           </p>
         </section>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {error && (
             <div
-              className="rounded-lg bg-red-50 p-4 text-sm text-red-700 ring-1 ring-inset ring-red-200"
+              className="rounded-lg border border-[#f0d3c9] bg-[#fdf1ee] p-4 text-sm text-[#8f2f1c]"
               role="alert"
             >
-              <p className="font-medium">That didn’t work</p>
-              <p className="mt-1">{error}</p>
+              <p className="font-semibold">That didn’t work</p>
+              <p className="mt-1 leading-relaxed">{error}</p>
             </div>
           )}
 
@@ -184,19 +187,19 @@ export default function VideoAnalysis() {
             <VideoResultsPanel result={result} />
           ) : (
             !error && (
-              <div className="flex h-full min-h-[20rem] flex-col justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8">
-                <p className="text-lg font-semibold text-slate-800">Three steps</p>
-                <ol className="mt-4 space-y-3">
+              <div className="flex h-full min-h-[20rem] flex-col justify-center rounded-xl border border-dashed border-line bg-card p-8">
+                <p className="text-lg font-semibold text-ink">Three steps</p>
+                <ol className="mt-5 space-y-4">
                   {STEPS.map((step, index) => (
                     <li key={step} className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-paper text-xs font-semibold text-ink">
                         {index + 1}
                       </span>
-                      <span className="text-sm text-slate-600">{step}</span>
+                      <span className="pt-0.5 text-sm text-muted">{step}</span>
                     </li>
                   ))}
                 </ol>
-                <p className="mt-6 text-xs text-slate-500">
+                <p className="mt-7 border-t border-soft pt-4 text-xs leading-relaxed text-faint">
                   You will get one word for the whole clip and a coloured strip showing each
                   moment.
                 </p>

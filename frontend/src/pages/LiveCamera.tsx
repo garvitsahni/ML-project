@@ -35,7 +35,7 @@ export default function LiveCamera() {
     if (!data) return
     const scaleX = canvas.width / data.image.width
     const scaleY = canvas.height / data.image.height
-    ctx.strokeStyle = '#22c55e'
+    ctx.strokeStyle = '#3f6b52'
     ctx.lineWidth = 2
     for (const box of data.boxes) {
       ctx.strokeRect(
@@ -128,35 +128,36 @@ export default function LiveCamera() {
   const level = result ? crowdLevel(result.count) : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
+          Live camera
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           How crowded is this room?
         </h1>
-        <p className="mt-1 text-slate-600">
+        <p className="mt-2 max-w-xl text-muted">
           Point your camera at a crowd. The level updates while the camera runs.
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="space-y-4 lg:col-span-2">
-          <div className="overflow-hidden rounded-xl bg-slate-900 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
-              <h2 className="font-medium text-white">Camera</h2>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <section className="space-y-5 lg:col-span-2">
+          <div className="overflow-hidden rounded-xl border border-ink bg-ink">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <h2 className="text-sm font-semibold tracking-tight text-paper">Camera</h2>
               <button
                 type="button"
                 onClick={streaming ? stopCamera : startCamera}
                 className={[
                   'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-white transition-colors',
-                  streaming
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-emerald-600 hover:bg-emerald-700',
+                  streaming ? 'bg-crowded hover:bg-[#9a3826]' : 'bg-quiet hover:bg-[#34573f]',
                 ].join(' ')}
               >
                 {streaming ? (
-                  <CameraOff size={16} aria-hidden />
+                  <CameraOff size={15} aria-hidden />
                 ) : (
-                  <Camera size={16} aria-hidden />
+                  <Camera size={15} aria-hidden />
                 )}
                 {streaming ? 'Stop camera' : 'Start camera'}
               </button>
@@ -176,22 +177,22 @@ export default function LiveCamera() {
                 aria-hidden
               />
               {!streaming && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
-                  <Camera size={48} aria-hidden />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/50">
+                  <Camera size={42} aria-hidden />
                   <p className="text-sm">Camera is off</p>
                   <p className="text-xs">Press “Start camera” and allow access</p>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-slate-700 px-4 py-3">
-              <label className="flex items-center gap-2 text-sm text-slate-200">
+            <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-3">
+              <label className="flex items-center gap-2 text-sm text-paper/80">
                 <input
                   type="checkbox"
                   checked={auto}
                   onChange={(event) => setAuto(event.target.checked)}
                   disabled={!streaming}
-                  className="accent-brand-500"
+                  className="accent-paper"
                 />
                 Check automatically
               </label>
@@ -199,9 +200,9 @@ export default function LiveCamera() {
                 type="button"
                 onClick={() => void captureAndAnalyze()}
                 disabled={!streaming || analyzing}
-                className="inline-flex items-center gap-2 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-600"
+                className="inline-flex items-center gap-2 rounded-md bg-paper px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-white disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/50"
               >
-                <ScanLine size={16} aria-hidden />
+                <ScanLine size={15} aria-hidden />
                 {analyzing ? 'Checking…' : 'Check now'}
               </button>
             </div>
@@ -210,7 +211,7 @@ export default function LiveCamera() {
 
           {error && (
             <div
-              className="rounded-lg bg-red-50 p-4 text-sm text-red-700 ring-1 ring-inset ring-red-200"
+              className="rounded-lg border border-[#f0d3c9] bg-[#fdf1ee] p-4 text-sm text-[#8f2f1c]"
               role="alert"
             >
               {error}
@@ -218,17 +219,22 @@ export default function LiveCamera() {
           )}
         </section>
 
-        <aside className="space-y-4">
+        <aside className="space-y-5">
           {result && level ? (
-            <VerdictCard level={level} people={result.count} caption="in the latest frame" compact />
+            <VerdictCard
+              level={level}
+              people={result.count}
+              caption="in the latest frame"
+              compact
+            />
           ) : (
-            <div className="rounded-xl bg-white p-5 text-sm text-slate-600 ring-1 ring-slate-200">
+            <div className="rounded-xl border border-line bg-card p-5 text-sm leading-relaxed text-muted">
               Start the camera to see the crowd level here.
             </div>
           )}
 
           {result && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-faint">
               Checked in {result.metadata.inference_time_s.toFixed(2)} s · frame{' '}
               {result.image.width}×{result.image.height}
             </p>
@@ -236,7 +242,7 @@ export default function LiveCamera() {
 
           <Details summary="Advanced settings">
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-ink">
                 Detector sensitivity ({conf.toFixed(2)})
               </span>
               <input
@@ -246,18 +252,18 @@ export default function LiveCamera() {
                 step={0.01}
                 value={conf}
                 onChange={(event) => setConf(Number(event.target.value))}
-                className="mt-2 w-full accent-brand-600"
+                className="mt-2 w-full accent-ink"
               />
-              <span className="mt-1 block text-xs text-slate-500">
+              <span className="mt-1 block text-xs leading-relaxed text-faint">
                 Lower finds more people, including ones it is unsure about.
               </span>
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-slate-700">Image size</span>
+              <span className="font-medium text-ink">Image size</span>
               <select
                 value={imgsz}
                 onChange={(event) => setImgsz(Number(event.target.value))}
-                className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2"
+                className="mt-2 w-full rounded-md border border-line bg-card px-3 py-2 text-ink"
               >
                 <option value={320}>Small (fast)</option>
                 <option value={640}>Normal</option>
@@ -266,7 +272,7 @@ export default function LiveCamera() {
             </label>
           </Details>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs leading-relaxed text-faint">
             Counts are estimates from the detector, not a head count. The camera feed stays
             on this computer.
           </p>

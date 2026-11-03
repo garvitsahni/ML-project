@@ -9,16 +9,16 @@ export function Details({
   children: ReactNode
 }) {
   return (
-    <details className="group rounded-xl bg-white ring-1 ring-slate-200">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+    <details className="group rounded-lg border border-line bg-card px-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-medium text-ink transition-colors hover:text-accent">
         <span>{summary}</span>
         <ChevronDown
-          size={16}
+          size={15}
           aria-hidden
-          className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+          className="shrink-0 text-faint transition-transform group-open:rotate-180"
         />
       </summary>
-      <div className="space-y-4 border-t border-slate-200 p-4">{children}</div>
+      <div className="space-y-5 border-t border-soft pb-4 pt-4">{children}</div>
     </details>
   )
 }

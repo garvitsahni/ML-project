@@ -111,12 +111,15 @@ def draw_detections(image: np.ndarray, detections: tuple[Detection, ...]) -> np.
     """Return a copy of ``image`` with green boxes and confidence labels."""
     import cv2
 
+    # Muted green (BGR) that sits with the app's paper palette instead of
+    # the default saturated #00ff00.
+    green = (79, 138, 104)
     out = image.copy()
     for d in detections:
         p1 = (int(round(d.x1)), int(round(d.y1)))
         p2 = (int(round(d.x2)), int(round(d.y2)))
-        cv2.rectangle(out, p1, p2, (0, 255, 0), 2)
+        cv2.rectangle(out, p1, p2, green, 2)
         label = f"{d.conf:.2f}"
         cv2.putText(out, label, (p1[0], max(12, p1[1] - 4)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, green, 1, cv2.LINE_AA)
     return out

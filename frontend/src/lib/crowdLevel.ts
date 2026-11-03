@@ -13,6 +13,10 @@ export interface CrowdLevelInfo {
   level: CrowdLevel
   word: string
   meaning: string
+  /** Position on the three-step meter: 0 quiet, 1 busy, 2 crowded. */
+  index: number
+  /** Solid colour for rules, meter fills and chart bars. */
+  hex: string
   panel: string
   word_class: string
   chip: string
@@ -24,28 +28,34 @@ const LEVELS: Record<CrowdLevel, CrowdLevelInfo> = {
     level: 'quiet',
     word: 'Quiet',
     meaning: 'Few people in view.',
-    panel: 'bg-emerald-50 ring-emerald-200',
-    word_class: 'text-emerald-700',
-    chip: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
-    bar: 'bg-emerald-500',
+    index: 0,
+    hex: '#3f6b52',
+    panel: 'bg-card',
+    word_class: 'text-quiet',
+    chip: 'bg-[#eef3ee] text-quiet ring-[#d7e2da]',
+    bar: 'bg-quiet',
   },
   busy: {
     level: 'busy',
     word: 'Busy',
     meaning: 'A moderate crowd.',
-    panel: 'bg-amber-50 ring-amber-200',
-    word_class: 'text-amber-700',
-    chip: 'bg-amber-100 text-amber-900 ring-amber-200',
-    bar: 'bg-amber-500',
+    index: 1,
+    hex: '#a1731f',
+    panel: 'bg-card',
+    word_class: 'text-busy',
+    chip: 'bg-[#f8f1e2] text-busy ring-[#eadfc6]',
+    bar: 'bg-busy',
   },
   crowded: {
     level: 'crowded',
     word: 'Crowded',
     meaning: 'A lot of people in view.',
-    panel: 'bg-rose-50 ring-rose-200',
-    word_class: 'text-rose-700',
-    chip: 'bg-rose-100 text-rose-800 ring-rose-200',
-    bar: 'bg-rose-500',
+    index: 2,
+    hex: '#b4442e',
+    panel: 'bg-card',
+    word_class: 'text-crowded',
+    chip: 'bg-[#fdf1ee] text-crowded ring-[#f0d3c9]',
+    bar: 'bg-crowded',
   },
 }
 

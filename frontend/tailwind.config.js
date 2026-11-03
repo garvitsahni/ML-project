@@ -4,13 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-        },
+        paper: '#f7f6f3',
+        card: '#ffffff',
+        line: '#e8e5de',
+        soft: '#eeece7',
+        ink: '#17161a',
+        muted: '#6b6a66',
+        faint: '#8a8781',
+        accent: '#b4442e',
+        quiet: '#3f6b52',
+        busy: '#a1731f',
+        crowded: '#b4442e',
       },
     },
   },
