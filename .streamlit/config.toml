@@ -1,8 +1,0 @@
-# CrowdSense AI dashboard theme — picked up automatically by Streamlit.
-# Paired with src/ui/theme.py (CSS); edit both together.
-[theme]
-primaryColor = "#0F766E"
-backgroundColor = "#FAFAF9"
-secondaryBackgroundColor = "#F0EFEB"
-textColor = "#1C1917"
-font = "sans serif"

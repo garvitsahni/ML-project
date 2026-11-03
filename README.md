@@ -3,8 +3,8 @@
 **Research question:** *Do temporal crowd-movement features improve anomaly
 prediction over static crowd-density features alone?*
 
-Everything in this repository is computed from real data — the dashboard only
-renders files that exist under `reports/`, and no metric is ever fabricated,
+Everything in this repository is computed from real data — the API and web UI
+only present values produced by the pipeline, and no metric is ever fabricated,
 rounded up, or reported without its provenance.
 
 > Environment: Python 3.13 (Windows), CPU-only (torch 2.9.0+cpu — no CUDA).
@@ -15,9 +15,8 @@ rounded up, or reported without its provenance.
 # 1. Dependencies (verified environment; requirements.txt lists them)
 python -m pip install -r requirements.txt
 
-# 2. Tests (TDD suite: ~179 tests)
-#    Prefer the wrapper — it pins native thread pools to 1 and avoids
-#    intermittent OpenMP access-violation crashes on Windows:
+# 2. Tests (TDD suite; wrapper pins native thread pools to 1 to avoid
+#    intermittent OpenMP access-violation crashes on Windows)
 powershell -ExecutionPolicy Bypass -File scripts\run_tests.ps1
 #    (plain `python -m pytest tests/ -q` usually works too, but can flake)
 
@@ -49,8 +48,15 @@ python scripts/screen_features.py
 # 7. Evaluate bundles on the held-out test split (+ Experiment E gate status)
 python scripts/evaluate.py
 
-# 8. Dashboard
-python -m streamlit run app.py
+# 8. Web app (React SPA + FastAPI)
+#    Build the SPA once (outputs to backend/static/), then serve app + API:
+cd frontend
+npm install
+npm run build
+cd ..
+python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
+#    Open http://127.0.0.1:8000 — Photo Analysis, Video Analysis, Live Camera.
+#    For frontend hot-reload, run `npm run dev` (Vite proxies /api to :8000).
 ```
 
 Smoke variants (seconds instead of an hour):
@@ -215,7 +221,15 @@ algorithm (C − A > 0 in all five rows) — the research question's answer is
 ## Project structure
 
 ```
-app.py                     # Streamlit shell (sidebar navigation)
+backend/                   # FastAPI app + SPA build output
+  app.py                   # routes: /api/health, /api/model, detect-image/video/frame
+  service.py               # upload decode -> src pipeline -> JSON
+  schemas.py               # typed response models
+  static/                  # `npm run build` output (gitignored)
+frontend/                  # React + TypeScript (Vite) SPA
+  src/pages/               # Photo Analysis, Video Analysis, Live Camera
+  src/components/          # nav, upload dropzone, results panels, model badge
+  src/lib/api.ts           # typed API client
 configs/
   paths.yaml               # dataset + report paths
   experiments.yaml         # seed, window/stride/grid, algorithms
@@ -236,18 +250,25 @@ src/
   features/                # schema, static, movement, window pipeline
   models/                  # grouped splits, 5 trainers, joblib bundles
   experiments/             # metrics + A-D runner (E gated)
-  inference/               # schema-strict InferenceService
+  inference/               # schema-strict InferenceService + presentation helpers
   visualization/           # Agg-backend PNG plots
-  ui/                      # 8 dashboard pages + shared helpers
-tests/                     # TDD suite (~179 tests) + synthetic fixtures
+tests/                     # TDD suite + synthetic fixtures
 docs/superpowers/          # approved spec + plan
 ```
 
-## Dashboard pages
+## Web app (React + FastAPI)
 
-Overview · Methodology (honest limitations) · Dataset Explorer ·
-Photo Analysis (static features only — no temporal claims from one frame) ·
-Video Analysis (window features + model predictions if a bundle exists) ·
-Live Camera (rolling window; friendly failure without a device) ·
-Training & Evaluation (real subprocess runs with log tails) ·
-Research Results (renders only existing files; missing → exact command shown).
+Three tools only, each backed by the same pipeline the tests cover:
+
+- **Photo Analysis** — YOLOv8n person detection, annotated frame, 4×4 density
+  grid, and the six static features. No temporal claims from one frame.
+- **Video Analysis** — detect → ByteTrack → optical flow → 30-frame windows;
+  per-window anomaly scores appear only when a compatible trained bundle exists.
+- **Live Camera** — browser `getUserMedia` frames sent to `/api/detect-frame`
+  for single-frame detection. No anomaly score: one frame has no temporal
+  features.
+
+Honesty rules visible in the UI: counts are detector estimates (no counting
+ground truth), speeds are px/frame (never m/s), missing model/metrics render as
+`—` rather than invented numbers, and every predictions block carries the model
+caveat.

@@ -17,9 +17,6 @@ data/processed/
 *.pt
 models/*.joblib
 
-# Streamlit
-.streamlit/secrets.toml
-
 # IDE / OS
 .vscode/
 .idea/
