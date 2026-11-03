@@ -254,6 +254,7 @@ src/
   visualization/           # Agg-backend PNG plots
 tests/                     # TDD suite + synthetic fixtures
 docs/superpowers/          # approved spec + plan
+docs/presentation/         # class deck: build_deck.py + generated pptx/pdf
 ```
 
 ## Web app (React + FastAPI)
